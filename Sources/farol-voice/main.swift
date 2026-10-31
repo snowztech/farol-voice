@@ -10,6 +10,7 @@ let usage = """
 usage:
   farol-voice listen [--threshold 0.05] [--boost 1]
   farol-voice score <corpus> [--threshold 0.05] [--boost 1]
+  farol-voice serve --model parakeet-v3|whisper-turbo --models <folder>
 
 A corpus has positive/ and negative/ folders of 16 kHz mono WAV files.
 """
@@ -39,33 +40,12 @@ func loadDetector(_ arguments: [String]) async throws -> WakeWordDetector {
     ))
 }
 
-/// Mic audio as 16 kHz mono. The model runs outside the tap, because blocking a real-time audio thread drops audio.
+/// Mic audio as a stream. The model runs outside the tap, because blocking a real-time audio thread drops audio.
 func microphone() throws -> AsyncStream<[Float]> {
-    let engine = AVAudioEngine()
-    let input = engine.inputNode.outputFormat(forBus: 0)
-    guard input.sampleRate > 0 else { fail("No microphone available, or macOS denied access to it.") }
-    guard let output = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
-          let converter = AVAudioConverter(from: input, to: output) else { fail("Can't convert the microphone's format.") }
-
+    let mic = Microphone()
     let (stream, continuation) = AsyncStream.makeStream(of: [Float].self, bufferingPolicy: .bufferingNewest(100))
-    engine.inputNode.installTap(onBus: 0, bufferSize: 4096, format: input) { buffer, _ in
-        let capacity = AVAudioFrameCount(Double(buffer.frameLength) * sampleRate / input.sampleRate) + 1
-        guard let converted = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: capacity) else { return }
-        var delivered = false
-        converter.convert(to: converted, error: nil) { _, status in
-            if delivered {
-                status.pointee = .noDataNow
-                return nil
-            }
-            delivered = true
-            status.pointee = .haveData
-            return buffer
-        }
-        guard let samples = converted.floatChannelData?[0], converted.frameLength > 0 else { return }
-        continuation.yield(Array(UnsafeBufferPointer(start: samples, count: Int(converted.frameLength))))
-    }
-    continuation.onTermination = { _ in engine.stop() }
-    try engine.start()
+    continuation.onTermination = { _ in mic.stop() }
+    try mic.start { continuation.yield($0) }
     return stream
 }
 
@@ -165,6 +145,7 @@ do {
     switch arguments.first {
     case "listen": try await listen(Array(arguments.dropFirst()))
     case "score": try await score(Array(arguments.dropFirst()))
+    case "serve": try await serve(Array(arguments.dropFirst()))
     default: fail(usage)
     }
 } catch {

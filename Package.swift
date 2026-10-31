@@ -10,7 +10,12 @@ let package = Package(
     ],
     targets: [
         .target(name: "WakeWord", dependencies: [.product(name: "SpeechWakeWord", package: "speech-swift")]),
-        .executableTarget(name: "farol-voice", dependencies: ["WakeWord", .product(name: "SpeechWakeWord", package: "speech-swift")]),
+        .executableTarget(name: "farol-voice", dependencies: [
+            "WakeWord",
+            .product(name: "SpeechWakeWord", package: "speech-swift"),
+            .product(name: "ParakeetASR", package: "speech-swift"),
+            .product(name: "WhisperASR", package: "speech-swift"),
+        ]),
         .testTarget(name: "WakeWordTests", dependencies: ["WakeWord"]),
     ],
     swiftLanguageModes: [.v5]
