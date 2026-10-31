@@ -9,6 +9,9 @@ import WhisperASR
 private let protocolVersion = 1
 private let minimumSamples = 16000 / 4
 private let outputLock = NSLock()
+/// Audio callbacks must never wait on a pipe that Farol is slow to read.
+private let levels = DispatchQueue(label: "farol-voice.levels", qos: .userInteractive)
+private let levelInterval: TimeInterval = 0.05
 
 private func emit(_ fields: [String: Any]) {
     guard let line = try? JSONSerialization.data(withJSONObject: fields) else { return }
@@ -56,12 +59,25 @@ private enum Transcriber {
 private final class Recording {
     private let lock = NSLock()
     private var samples: [Float] = []
+    private var lastLevel = Date.distantPast
     let mic = Microphone()
 
     func append(_ more: [Float]) {
         lock.lock()
-        defer { lock.unlock() }
         samples += more
+        lock.unlock()
+        let now = Date()
+        guard now.timeIntervalSince(lastLevel) >= levelInterval, !more.isEmpty else { return }
+        lastLevel = now
+        let level = Self.loudness(more)
+        levels.async { emit(["type": "level", "level": level]) }
+    }
+
+    /// 0 to 1, from -50 dB (a quiet room) to -10 dB (close, clear speech).
+    private static func loudness(_ samples: [Float]) -> Double {
+        let power = samples.reduce(Float(0)) { $0 + $1 * $1 } / Float(samples.count)
+        let decibels = 10 * log10(Double(max(power, 1e-10)))
+        return min(max((decibels + 50) / 40, 0), 1)
     }
 
     func finish() -> [Float] {

@@ -16,7 +16,7 @@ final class Microphone {
               let output = AVAudioFormat(standardFormatWithSampleRate: 16000, channels: 1),
               let converter = AVAudioConverter(from: input, to: output) else { throw MicrophoneError.unavailable }
 
-        engine.inputNode.installTap(onBus: 0, bufferSize: 4096, format: input) { buffer, _ in
+        engine.inputNode.installTap(onBus: 0, bufferSize: 1024, format: input) { buffer, _ in
             let capacity = AVAudioFrameCount(Double(buffer.frameLength) * 16000 / input.sampleRate) + 1
             guard let converted = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: capacity) else { return }
             var delivered = false
