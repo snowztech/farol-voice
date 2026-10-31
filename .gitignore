@@ -1,0 +1,4 @@
+.build/
+.DS_Store
+# Voice recordings stay on this machine.
+corpus/
