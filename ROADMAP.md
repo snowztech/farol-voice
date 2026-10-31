@@ -25,7 +25,9 @@ The launch test: run 5 agents for an hour, mostly without looking at the screen,
 In progress, on Farol's `feat/voice-input` branch. Like Handy, inside Farol: hold a key, talk, and the text lands in the session's prompt. You press Return.
 
 - [x] `farol-voice serve`, and Farol starting, talking to and stopping it
-- [x] A Voice section in Settings: on and off, model, key, storage
+- [x] A Voice section in Settings: on and off, keys, installing and deleting models
+- [x] A themed indicator with a waveform from the real mic level
+- [x] A second key to tell Farol what to do, by plain rules: go to a session, message one, start a task
 - [ ] Use it for a week, and measure speed and memory against the bars above
 - [ ] Download the helper when you turn voice on, from signed and notarized releases. For now, `scripts/install-dev.sh`
 - [ ] Compare FluidAudio, which may also run on macOS 14
