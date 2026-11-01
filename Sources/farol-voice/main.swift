@@ -1,6 +1,8 @@
 import AVFoundation
 import Foundation
 import SpeechWakeWord
+import VoiceCore
+import VoiceEngine
 import WakeWord
 
 let sampleRate = 16000.0
@@ -10,6 +12,7 @@ let usage = """
 usage:
   farol-voice listen [--threshold 0.05] [--boost 1]
   farol-voice score <corpus> [--threshold 0.05] [--boost 1]
+  farol-voice transcribe <file.wav>... [--model parakeet-v3] [--words "Farol, snowztech"]
 
 A corpus has positive/ and negative/ folders of 16 kHz mono WAV files.
 """
@@ -39,33 +42,12 @@ func loadDetector(_ arguments: [String]) async throws -> WakeWordDetector {
     ))
 }
 
-/// Mic audio as 16 kHz mono. The model runs outside the tap, because blocking a real-time audio thread drops audio.
+/// Mic audio as a stream. The model runs outside the tap, because blocking a real-time audio thread drops audio.
 func microphone() throws -> AsyncStream<[Float]> {
-    let engine = AVAudioEngine()
-    let input = engine.inputNode.outputFormat(forBus: 0)
-    guard input.sampleRate > 0 else { fail("No microphone available, or macOS denied access to it.") }
-    guard let output = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
-          let converter = AVAudioConverter(from: input, to: output) else { fail("Can't convert the microphone's format.") }
-
+    let mic = Microphone()
     let (stream, continuation) = AsyncStream.makeStream(of: [Float].self, bufferingPolicy: .bufferingNewest(100))
-    engine.inputNode.installTap(onBus: 0, bufferSize: 4096, format: input) { buffer, _ in
-        let capacity = AVAudioFrameCount(Double(buffer.frameLength) * sampleRate / input.sampleRate) + 1
-        guard let converted = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: capacity) else { return }
-        var delivered = false
-        converter.convert(to: converted, error: nil) { _, status in
-            if delivered {
-                status.pointee = .noDataNow
-                return nil
-            }
-            delivered = true
-            status.pointee = .haveData
-            return buffer
-        }
-        guard let samples = converted.floatChannelData?[0], converted.frameLength > 0 else { return }
-        continuation.yield(Array(UnsafeBufferPointer(start: samples, count: Int(converted.frameLength))))
-    }
-    continuation.onTermination = { _ in engine.stop() }
-    try engine.start()
+    continuation.onTermination = { _ in mic.stop() }
+    try mic.start { continuation.yield($0) }
     return stream
 }
 
@@ -157,6 +139,45 @@ func score(_ arguments: [String]) async throws {
     }
 }
 
+func transcribe(_ arguments: [String]) async throws {
+    var files: [String] = []
+    var model = VoiceModel.parakeetV3
+    var words: [String] = []
+    var index = 0
+    while index < arguments.count {
+        switch arguments[index] {
+        case "--model":
+            guard index + 1 < arguments.count, let chosen = VoiceModel(rawValue: arguments[index + 1]) else { fail(usage) }
+            model = chosen
+            index += 1
+        case "--words":
+            guard index + 1 < arguments.count else { fail(usage) }
+            words = DictationText.words(from: arguments[index + 1])
+            index += 1
+        default:
+            files.append(arguments[index])
+        }
+        index += 1
+    }
+    guard !files.isEmpty else { fail(usage) }
+    let engine = SpeechEngine(folder: SpeechEngine.defaultFolder)
+    let loading = Date()
+    try await engine.load(model, online: !engine.isInstalled(model)) { _, _ in }
+    print(String(format: "loaded in %.0f ms", Date().timeIntervalSince(loading) * 1000))
+    for file in files {
+        let audio = try AVAudioFile(forReading: URL(fileURLWithPath: file))
+        guard audio.processingFormat.sampleRate == sampleRate, audio.processingFormat.channelCount == 1,
+              let buffer = AVAudioPCMBuffer(pcmFormat: audio.processingFormat, frameCapacity: AVAudioFrameCount(audio.length)) else {
+            fail("\(file) isn't 16 kHz mono.")
+        }
+        try audio.read(into: buffer)
+        let samples = Array(UnsafeBufferPointer(start: buffer.floatChannelData![0], count: Int(buffer.frameLength)))
+        let started = Date()
+        let text = try await engine.transcribe(samples)
+        print(String(format: "%5.0f ms  ", Date().timeIntervalSince(started) * 1000) + DictationText.clean(text, customWords: words))
+    }
+}
+
 // Keeps wakes appearing live when the output is piped to a log.
 setvbuf(stdout, nil, _IOLBF, 0)
 
@@ -165,6 +186,7 @@ do {
     switch arguments.first {
     case "listen": try await listen(Array(arguments.dropFirst()))
     case "score": try await score(Array(arguments.dropFirst()))
+    case "transcribe": try await transcribe(Array(arguments.dropFirst()))
     default: fail(usage)
     }
 } catch {
