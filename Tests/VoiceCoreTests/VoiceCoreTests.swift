@@ -38,6 +38,18 @@ final class VoiceCoreTests: XCTestCase {
         XCTAssertEqual(DictationText.words(from: " Farol, snowztech,, "), ["Farol", "snowztech"])
     }
 
+    func testAddsWordsOnce() {
+        XCTAssertEqual(DictationText.list("Farol", adding: " snowztech "), "Farol, snowztech")
+        XCTAssertEqual(DictationText.list("Farol", adding: "farol, Ghostty"), "Farol, Ghostty")
+        XCTAssertEqual(DictationText.list("", adding: "Farol"), "Farol")
+        XCTAssertEqual(DictationText.list("Farol", adding: " , "), "Farol")
+    }
+
+    func testRemovesAWord() {
+        XCTAssertEqual(DictationText.list("Farol, Ghostty", removing: "Farol"), "Ghostty")
+        XCTAssertEqual(DictationText.list("Farol", removing: "Farol"), "")
+    }
+
     func testRecommendsParakeetForLanguagesItKnows() {
         XCTAssertEqual(VoiceModel.recommended(languages: ["pt-PT", "en"]), .parakeetV3)
         XCTAssertEqual(VoiceModel.recommended(languages: ["fr_FR"]), .parakeetV3)

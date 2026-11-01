@@ -11,28 +11,34 @@ struct SettingsView: View {
     @State private var startAtLogin = SMAppService.mainApp.status == .enabled
     @State private var loginProblem: String?
     @State private var modelToDelete: VoiceModel?
+    @State private var newWord = ""
+    @State private var tryIt = ""
 
     private let permissionCheck = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         Form {
-            Section {
-                permissionRow("Microphone", detail: "Opens only while you hold the key.", allowed: microphone == .authorized) {
-                    if microphone == .notDetermined {
-                        AVCaptureDevice.requestAccess(for: .audio) { _ in }
-                    } else {
-                        Permissions.openPrivacy("Microphone")
+            // Out of the way once it's done, since nobody needs to see it again.
+            if microphone != .authorized || !accessibility {
+                Section {
+                    permissionRow("Microphone", detail: "Opens only while you hold the key.", allowed: microphone == .authorized) {
+                        if microphone == .notDetermined {
+                            AVCaptureDevice.requestAccess(for: .audio) { _ in }
+                        } else {
+                            Permissions.openPrivacy("Microphone")
+                        }
                     }
+                    permissionRow("Accessibility", detail: "Lets the key work everywhere and your words be typed.", allowed: accessibility) {
+                        Permissions.askForAccessibility()
+                        Permissions.openPrivacy("Accessibility")
+                    }
+                } header: {
+                    Text("Permissions")
                 }
-                permissionRow("Accessibility", detail: "Lets the key work everywhere and your words be typed.", allowed: accessibility) {
-                    Permissions.askForAccessibility()
-                    Permissions.openPrivacy("Accessibility")
-                }
-            } header: {
-                Text("Permissions")
             }
 
             Section {
+                TextField("Try it", text: $tryIt, prompt: Text("Hold \(preferences.talkKey.title) and talk"))
                 Picker("Hold to talk", selection: $preferences.talkKey) {
                     ForEach(TalkKey.allCases) { Text($0.title).tag($0) }
                 }
@@ -41,14 +47,31 @@ struct SettingsView: View {
                 if let loginProblem {
                     Text(loginProblem).font(.caption).foregroundStyle(.secondary)
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    TextField("Your words", text: $preferences.customWords)
-                    Text("Names and terms to get right, separated by commas.").font(.caption).foregroundStyle(.secondary)
-                }
             } header: {
                 Text("Dictation")
             } footer: {
-                Text("Speech runs on this Mac. Audio is never sent anywhere or saved.")
+                if preferences.talkKey == .fn {
+                    Text("If Fn opens the emoji picker, change what it does in System Settings, Keyboard, or choose Right Option.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+
+            Section {
+                HStack {
+                    TextField("Add a word", text: $newWord, prompt: Text("Add a name or term"))
+                        .labelsHidden()
+                        .onSubmit(addWord)
+                    Button("Add", action: addWord).disabled(newWord.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                if !preferences.words.isEmpty {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), alignment: .leading)], alignment: .leading, spacing: 6) {
+                        ForEach(preferences.words, id: \.self, content: wordChip)
+                    }
+                }
+            } header: {
+                Text("Your words")
+            } footer: {
+                Text("Close matches become exactly what you add here, like Farrol becoming Farol.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -61,6 +84,9 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("Models")
+            } footer: {
+                Text("Speech runs on this Mac. Audio is never sent anywhere or saved.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -76,6 +102,28 @@ struct SettingsView: View {
                 primaryButton: .destructive(Text("Delete")) { library.delete(model) },
                 secondaryButton: .cancel())
         }
+    }
+
+    private func addWord() {
+        preferences.customWords = DictationText.list(preferences.customWords, adding: newWord)
+        newWord = ""
+    }
+
+    private func wordChip(_ word: String) -> some View {
+        HStack(spacing: 4) {
+            Text(word).lineLimit(1).truncationMode(.tail)
+            Button {
+                preferences.customWords = DictationText.list(preferences.customWords, removing: word)
+            } label: {
+                Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove \(word)")
+        }
+        .font(.callout)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(.quaternary, in: Capsule())
     }
 
     private func permissionRow(_ title: String, detail: String, allowed: Bool, allow: @escaping () -> Void) -> some View {

@@ -16,6 +16,19 @@ public enum DictationText {
         list.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
     }
 
+    /// The list with new words added, which can be several separated by commas, keeping one of each whatever its case.
+    public static func list(_ list: String, adding input: String) -> String {
+        var words = words(from: list)
+        for word in Self.words(from: input) where !words.contains(where: { $0.caseInsensitiveCompare(word) == .orderedSame }) {
+            words.append(word)
+        }
+        return words.joined(separator: ", ")
+    }
+
+    public static func list(_ list: String, removing word: String) -> String {
+        words(from: list).filter { $0 != word }.joined(separator: ", ")
+    }
+
     private static func fix(_ line: String, customWords: [String]) -> String {
         guard !customWords.isEmpty else { return line }
         var tokens = line.split(separator: " ").map(String.init)
