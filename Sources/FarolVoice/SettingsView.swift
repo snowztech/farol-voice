@@ -138,27 +138,25 @@ struct SettingsView: View {
     }
 
     @ViewBuilder private var about: some View {
-        VStack(spacing: 6) {
-            PulsingIcon().frame(width: 96, height: 96).padding(.bottom, 6)
-            Text("Farol Voice").font(.system(size: 20, weight: .semibold))
+        VStack(spacing: 4) {
+            PulsingIcon().frame(width: 88, height: 88).padding(.bottom, 8)
+            Text("Farol Voice").font(.system(size: 18, weight: .semibold))
             Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev")")
                 .font(.system(size: 12)).foregroundStyle(Theme.muted)
-            HStack(spacing: 0) {
-                Text("From ")
-                Link("Farol", destination: URL(string: "https://farol.sh")!).underline().foregroundStyle(Theme.text)
-                Text(", the terminal for coding agents.")
+            HStack(spacing: 14) {
+                Link("Farol", destination: URL(string: "https://farol.sh")!)
+                Link("GitHub", destination: URL(string: "https://github.com/snowztech/farol-voice")!)
             }
-            .font(.system(size: 12.5)).foregroundStyle(Theme.muted).padding(.top, 8)
-            Link("Source code on GitHub", destination: URL(string: "https://github.com/snowztech/farol-voice")!)
-                .underline().font(.system(size: 12.5)).foregroundStyle(Theme.text)
-            Text("Speech by Parakeet from NVIDIA (CC BY 4.0) and Whisper from OpenAI (MIT).")
-                .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 14)
+            .font(.system(size: 12.5))
+            .foregroundStyle(Theme.text)
+            .padding(.top, 14)
             // The string literal is read as Markdown, so snowztech becomes a link in the same words.
             Text("© 2026 Lucas Neves Pereira, [snowztech](https://github.com/snowztech)")
-                .font(.system(size: 11.5)).foregroundStyle(Theme.muted).tint(Theme.text)
+                .font(.system(size: 11)).foregroundStyle(Theme.muted).tint(Theme.muted)
+                .padding(.top, 18)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 22)
+        .padding(.top, 20)
     }
 
     // MARK: Parts
@@ -204,9 +202,9 @@ struct SettingsView: View {
     private func detail(of model: VoiceModel) -> String {
         if library.installing == model { return library.installStatus }
         if library.installed.contains(model), let size = library.sizes[model], size > 0 {
-            return "\(model.strengths) \(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)) on this Mac."
+            return "\(model.strengths) \(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)) on this Mac. \(model.credit)"
         }
-        return "\(model.strengths) \(model.downloadSize)"
+        return "\(model.strengths) \(model.downloadSize) \(model.credit)"
     }
 
     private func setStartAtLogin(_ on: Bool) {

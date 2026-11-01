@@ -25,6 +25,14 @@ public enum VoiceModel: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// Who made it and its license. Parakeet's license requires crediting NVIDIA wherever it's used.
+    public var credit: String {
+        switch self {
+        case .parakeetV3: "By NVIDIA, CC BY 4.0."
+        case .whisperTurbo: "By OpenAI, MIT."
+        }
+    }
+
     public var downloadSize: String {
         switch self {
         case .parakeetV3: "About 600 MB."
