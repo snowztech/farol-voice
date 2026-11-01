@@ -13,19 +13,20 @@
 
 Hold a key, talk, let go, and your words appear wherever you were typing: your editor, your terminal, Slack, a browser. Speech runs on your Mac, with no account, no subscription and nothing sent anywhere.
 
-It's the first step toward a voice assistant for your terminal and coding agents, working with [Farol](https://github.com/snowztech/farol). Today it's dictation, and that part is ready to use every day. See [what's next](ROADMAP.md).
+Hold a second key to tell [Farol](https://github.com/snowztech/farol), the terminal for coding agents, what to do. It's on its way to being a voice assistant for your agents. See [what's next](ROADMAP.md).
 
 <p align="center">
   <img src="site/setup.png" width="49%" alt="The setup window, with steps to allow the microphone and Accessibility, install a speech model and try it.">
-  <img src="site/settings.png" width="49%" alt="Settings, showing speech models to install and a list of your own words.">
+  <img src="site/settings.png" width="49%" alt="Settings, showing it's connected to Farol, the key to hold and what you can say.">
 </p>
 
 ## What it does
 
+- **Talks to your agents.** Say "open Farol", "go to auth", "tell auth to run the tests", or "new task, add a search box", from any app. It needs Farol 0.54.1 or later, with **Settings, Agents, Let Farol Voice control sessions** turned on.
 - **Works everywhere.** It types into any app, and puts your clipboard back afterwards.
 - **Runs on your Mac.** Audio is never sent anywhere or saved. Once a model is installed, it needs no network.
 - **Fast.** About a tenth of a second to transcribe a short phrase on Apple Silicon, using the Parakeet V3 model.
-- **Your choice of model.** Parakeet V3 for speed in English and 24 more languages, or Whisper for about 100 languages. Install, switch and delete them yourself.
+- **Pick your language.** It recommends the model for it: Parakeet for speed in English and 24 more languages, or Whisper for about 100. Install, switch and delete them yourself.
 - **Gets your words right.** Add names and terms, and close matches become exactly what you wrote.
 - **Careful with your words.** It won't type into a password field, and if you switch apps while it's working, the text goes to your clipboard and not the wrong window.
 - **Quiet.** A small waveform shows while the mic is open, and it uses no CPU between uses.
@@ -36,7 +37,7 @@ It's the first step toward a voice assistant for your terminal and coding agents
 
 The setup window walks you through the rest: allow the microphone and Accessibility, install a model, and try it. After that it lives in your menu bar, under the sound bars.
 
-Hold **Fn** to talk, or choose Right Option or another right-side key in Settings. If Fn opens the emoji picker, change what it does in System Settings, Keyboard.
+Hold **Fn** to dictate and **Right Option** to tell Farol, or choose other keys in Settings. If Fn opens the emoji picker, change what it does in System Settings, Keyboard.
 
 Models are in `~/Library/Application Support/Farol Voice/models`.
 
