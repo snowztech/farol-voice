@@ -3,11 +3,17 @@ import AppKit
 final class MenuBar: NSObject, NSMenuDelegate {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let dictation: Dictation
+    private let library: ModelLibrary
+    private let preferences: Preferences
     private let openSettings: () -> Void
+    private let status = NSMenuItem(title: "", action: #selector(showSettings), keyEquivalent: "")
+    private let model = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let copyLast = NSMenuItem(title: "Copy Last Transcript", action: #selector(copyTranscript), keyEquivalent: "")
 
-    init(dictation: Dictation, openSettings: @escaping () -> Void) {
+    init(dictation: Dictation, library: ModelLibrary, preferences: Preferences, openSettings: @escaping () -> Void) {
         self.dictation = dictation
+        self.library = library
+        self.preferences = preferences
         self.openSettings = openSettings
         super.init()
         item.button?.image = Self.icon(lit: false)
@@ -15,7 +21,12 @@ final class MenuBar: NSObject, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
         menu.autoenablesItems = false
+        status.target = self
+        model.isEnabled = false
         copyLast.target = self
+        menu.addItem(status)
+        menu.addItem(model)
+        menu.addItem(.separator())
         menu.addItem(copyLast)
         let settings = NSMenuItem(title: "Settings…", action: #selector(showSettings), keyEquivalent: ",")
         settings.target = self
@@ -26,8 +37,20 @@ final class MenuBar: NSObject, NSMenuDelegate {
         dictation.onListeningChange = { [weak self] listening in self?.item.button?.image = Self.icon(lit: listening) }
     }
 
+    /// Says what to do next, which turns into the way to fix it when something's missing.
     func menuWillOpen(_ menu: NSMenu) {
         copyLast.isEnabled = dictation.lastTranscript != nil
+        model.title = library.isReady ? library.chosen.title : "No model installed"
+        if !Permissions.accessibility || Permissions.microphone != .authorized {
+            status.title = "Needs your OK…"
+            status.isEnabled = true
+        } else if !library.isReady {
+            status.title = "Install a model…"
+            status.isEnabled = true
+        } else {
+            status.title = "Hold \(preferences.talkKey.title) to talk"
+            status.isEnabled = false
+        }
     }
 
     @objc private func copyTranscript() {

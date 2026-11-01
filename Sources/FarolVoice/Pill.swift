@@ -1,6 +1,20 @@
 import AppKit
 import SwiftUI
 
+enum WaveSize: String, CaseIterable, Identifiable {
+    case compact, large
+
+    var id: String { rawValue }
+    var title: String { self == .compact ? "Compact" : "Large" }
+    var barWidth: CGFloat { self == .compact ? 2.5 : 3.5 }
+    var barGap: CGFloat { self == .compact ? 2.5 : 3.5 }
+    var tallest: CGFloat { self == .compact ? 16 : 28 }
+    var lowest: CGFloat { self == .compact ? 3 : 4 }
+    var pillHeight: CGFloat { self == .compact ? 30 : 46 }
+    var padding: CGFloat { self == .compact ? 14 : 20 }
+    var textSize: CGFloat { self == .compact ? 11.5 : 13 }
+}
+
 /// The mic state stays visible: this shows for as long as the mic is open.
 final class Pill {
     /// The newest mic level from 0 to 1, read by the drawing rather than published, so 20 updates a second cost SwiftUI nothing.
@@ -10,6 +24,7 @@ final class Pill {
     }
 
     private let signal = VoiceSignal()
+    private let preferences: Preferences
     private var hideLater: DispatchWorkItem?
     private lazy var panel: NSPanel = {
         let panel = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
@@ -24,17 +39,21 @@ final class Pill {
         return panel
     }()
 
+    init(preferences: Preferences) {
+        self.preferences = preferences
+    }
+
     func showListening() {
         signal.target = 0
-        present(PillView(content: .listening, signal: signal), accessibility: "Listening")
+        present(PillView(content: .listening, signal: signal, size: preferences.waveSize), accessibility: "Listening")
     }
 
     func showWorking() {
-        present(PillView(content: .working, signal: signal), accessibility: "Transcribing")
+        present(PillView(content: .working, signal: signal, size: preferences.waveSize), accessibility: "Transcribing")
     }
 
     func flash(_ text: String, for seconds: TimeInterval = 3) {
-        present(PillView(content: .message(text), signal: signal), accessibility: text)
+        present(PillView(content: .message(text), signal: signal, size: preferences.waveSize), accessibility: text)
         let later = DispatchWorkItem { [weak self] in self?.hide() }
         hideLater = later
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: later)
@@ -73,7 +92,7 @@ final class Pill {
 }
 
 /// Between updates, the bars ease toward the latest level: quick to rise with your voice, slower to fall.
-private final class VoiceSignal {
+final class VoiceSignal {
     var target = 0.0
     private(set) var shown = 0.0
 
@@ -83,7 +102,7 @@ private final class VoiceSignal {
     }
 }
 
-private struct PillView: View {
+struct PillView: View {
     enum Content {
         case listening
         case working
@@ -92,56 +111,60 @@ private struct PillView: View {
 
     let content: Content
     let signal: VoiceSignal
+    var size = WaveSize.compact
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let barCount = 7
     /// Tallest in the middle, so a voice reads as one shape and not a row of meters.
     private static let shape: [Double] = [0.45, 0.7, 0.9, 1, 0.9, 0.7, 0.45]
-    private static let barWidth: CGFloat = 2.5
-    private static let barGap: CGFloat = 2.5
-    private static let height: CGFloat = 16
-    private static let lowest: CGFloat = 3
     private static let beamSeconds = 1.3
 
     var body: some View {
-        Group {
+        ZStack {
             switch content {
             case .listening: bars(sweeping: false)
             case .working: bars(sweeping: true)
-            case .message(let text): Text(text).foregroundStyle(.white).lineLimit(1)
+            case .message(let text): Text(text).foregroundStyle(Theme.text).lineLimit(1)
             }
         }
-        .font(.system(size: 11.5, weight: .medium))
-        .padding(.horizontal, 14)
-        .frame(height: 30)
-        .background(Color(white: 0.09), in: Capsule())
-        .overlay(Capsule().strokeBorder(.white.opacity(0.14), lineWidth: 1))
+        .font(.system(size: size.textSize, weight: .medium))
+        .padding(.horizontal, size.padding)
+        .frame(height: size.pillHeight)
+        .background {
+            // A Capsule's outline drew stray straight segments at its sides here, so the rounding is explicit.
+            let shape = RoundedRectangle(cornerRadius: size.pillHeight / 2, style: .circular)
+            shape.fill(Theme.background)
+            shape.strokeBorder(Theme.line, lineWidth: 1)
+        }
         .fixedSize()
-        .padding(1)
+        // Room for the rounded edge, since the window's size can round down by a fraction of a point.
+        .padding(2)
     }
 
     private func bars(sweeping: Bool) -> some View {
-        let width = CGFloat(Self.barCount) * Self.barWidth + CGFloat(Self.barCount - 1) * Self.barGap
+        let width = CGFloat(Self.barCount) * size.barWidth + CGFloat(Self.barCount - 1) * size.barGap
         return TimelineView(.animation(minimumInterval: 1.0 / 30, paused: sweeping && reduceMotion)) { timeline in
-            Canvas { context, size in
+            Canvas { context, canvas in
                 let time = timeline.date.timeIntervalSinceReferenceDate
                 let level = sweeping ? 0 : signal.step()
                 for bar in 0..<Self.barCount {
-                    let x = CGFloat(bar) * (Self.barWidth + Self.barGap)
-                    let height = sweeping ? Self.lowest : barHeight(bar, level: level, time: time)
-                    let rect = CGRect(x: x, y: (size.height - height) / 2, width: Self.barWidth, height: height)
+                    let x = CGFloat(bar) * (size.barWidth + size.barGap)
+                    let height = sweeping ? size.lowest : barHeight(bar, level: level, time: time)
+                    let rect = CGRect(x: x, y: (canvas.height - height) / 2, width: size.barWidth, height: height)
                     let opacity = sweeping ? beamOpacity(bar, time: time) : 0.6 + 0.4 * level
-                    context.fill(Path(roundedRect: rect, cornerRadius: Self.barWidth / 2), with: .color(.white.opacity(opacity)))
+                    // The beam's blue while it thinks, and plain while it listens, like the two colors in Farol's icon.
+                    let color = sweeping ? Theme.beam : Theme.text
+                    context.fill(Path(roundedRect: rect, cornerRadius: size.barWidth / 2), with: .color(color.opacity(opacity)))
                 }
             }
         }
-        .frame(width: width, height: Self.height)
+        .frame(width: width, height: size.tallest)
     }
 
     private func barHeight(_ bar: Int, level: Double, time: TimeInterval) -> CGFloat {
         // A little independent movement keeps it reading as a voice. With Reduce Motion, the height follows only the real level.
         let wobble = reduceMotion ? 1 : 0.78 + 0.22 * sin(time * 7 + Double(bar) * 1.4)
-        return Self.lowest + (Self.height - Self.lowest) * CGFloat(level * Self.shape[bar] * wobble)
+        return size.lowest + (size.tallest - size.lowest) * CGFloat(level * Self.shape[bar] * wobble)
     }
 
     /// Farol means lighthouse: while it thinks, a soft beam passes across the bars at a steady pace.

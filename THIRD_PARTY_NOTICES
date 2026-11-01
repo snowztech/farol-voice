@@ -1,0 +1,23 @@
+Farol Voice is MIT licensed. It uses the following, under their own licenses.
+
+CODE
+
+speech-swift
+https://github.com/soniqo/speech-swift
+Apache License 2.0
+
+swift-transformers
+https://github.com/huggingface/swift-transformers
+Apache License 2.0
+
+SPEECH MODELS
+
+These aren't part of this repository. You download them from the app.
+
+Parakeet TDT 0.6B V3, by NVIDIA, converted to CoreML
+https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3
+Creative Commons Attribution 4.0
+
+Whisper Large V3 Turbo, by OpenAI, converted to CoreML
+https://github.com/openai/whisper
+MIT License
