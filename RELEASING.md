@@ -25,11 +25,15 @@ xcrun notarytool store-credentials farol --key AuthKey_XXXX.p8 --key-id <Key ID>
 
 ## Repository secrets
 
-The release workflow uses the snowztech organization's secrets, shared with the Farol apps: `DEVELOPER_ID_P12`, `DEVELOPER_ID_P12_PASSWORD`, `NOTARY_KEY`, `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID` and `SPARKLE_PRIVATE_KEY`. Each one has to list this repository among its selected repositories.
+The release workflow uses the snowztech organization's secrets, shared with its other apps: `DEVELOPER_ID_P12`, `DEVELOPER_ID_P12_PASSWORD`, `NOTARY_KEY`, `NOTARY_KEY_ID` and `NOTARY_ISSUER_ID`. Each one has to list this repository among its selected repositories.
+
+`SPARKLE_PRIVATE_KEY` is this repository's own secret. Farol Voice has its own update key, so don't share the organization's, which belongs to another app.
 
 ## Updates
 
-Farol Voice installs its own updates with [Sparkle](https://sparkle-project.org). Each release publishes `appcast.xml` next to the zip, and installed copies read it at `releases/latest/download/appcast.xml`. They only accept an update signed with the private half of `SUPublicEDKey`, which is Farol's key. If it's lost, everyone has to download the app again once.
+Farol Voice installs its own updates with [Sparkle](https://sparkle-project.org). Each release publishes `appcast.xml` next to the zip, and installed copies read it at `releases/latest/download/appcast.xml`. They only accept an update signed with the private half of `SUPublicEDKey`, and the release fails if its signature doesn't match that key.
+
+The key lives in your Keychain under the account `farol-voice`. Keep a copy of the private key somewhere safe, like a password manager. If it's lost, installed copies refuse every update signed with a new key, and everyone has to download the app again once.
 
 ## The site
 

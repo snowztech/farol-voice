@@ -21,6 +21,15 @@ fi
 
 # Like: sparkle:edSignature="…" length="12345"
 signature=$("$tools/bin/sign_update" --ed-key-file "$SPARKLE_KEY_FILE" "$zip")
+
+# Installed copies refuse an update that doesn't match the key inside the app, and there's no way to fix that from a later release. So a mismatch stops here.
+public_key=$(defaults read "$root/build/Farol Voice.app/Contents/Info.plist" SUPublicEDKey)
+ed_signature=$(echo "$signature" | sed -E 's/.*sparkle:edSignature="([^"]+)".*/\1/')
+swift "$root/scripts/verify-update.swift" "$public_key" "$zip" "$ed_signature" || {
+  echo "The signature doesn't match SUPublicEDKey. Check the SPARKLE_PRIVATE_KEY secret." >&2
+  exit 1
+}
+
 build=$(defaults read "$root/build/Farol Voice.app/Contents/Info.plist" CFBundleVersion)
 date=$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")
 

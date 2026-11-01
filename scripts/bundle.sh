@@ -29,7 +29,7 @@ install_name_tool -add_rpath @executable_path/../Frameworks "$app/Contents/MacOS
 feed=""
 if [ "${UPDATES:-0}" = "1" ]; then
   feed="<key>SUFeedURL</key><string>https://github.com/snowztech/farol-voice/releases/latest/download/appcast.xml</string>
-  <key>SUPublicEDKey</key><string>W35LvPDPqwRFtl8eT1HqPkOjqOv/XU7bwVd9e5CbADs=</string>
+  <key>SUPublicEDKey</key><string>dM34MTvAy3WD6i7iUg5jEyQH6CKH8BhBJw0pMZeq8l4=</string>
   <key>SUEnableAutomaticChecks</key><true/>"
 fi
 
