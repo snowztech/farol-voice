@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-01
+
+No changes to the app itself.
+
+### Changed
+
+- Development builds are now Farol Voice Dev, with their own id and permissions, so they run next to an installed Farol Voice without taking its permissions away.
+
 ## [0.1.0] - 2026-11-01
 
 The first version: dictation that runs on your Mac.
