@@ -12,20 +12,21 @@ enum Snapshot {
         for _ in 0..<30 { _ = signal.step() }
         NSApp.applicationIconImage = NSImage(contentsOfFile: "assets/FarolVoice.icns")
         for section in SettingsView.Section.allCases {
-            save(SettingsView(library: library, preferences: preferences, section: section), "settings-\(section.rawValue)", folder)
+            save(SettingsView(library: library, preferences: preferences, section: section, farolStatus: .needsSetting), "settings-\(section.rawValue)", folder, height: 560)
         }
         save(SetupView(library: library, preferences: preferences) {}, "setup", folder)
         for size in WaveSize.allCases {
-            save(PillView(content: .listening, signal: signal, size: size), "pill-listening-\(size.rawValue)", folder)
+            save(PillView(content: .listening(command: false), signal: signal, size: size), "pill-listening-\(size.rawValue)", folder)
+            save(PillView(content: .listening(command: true), signal: signal, size: size), "pill-command-\(size.rawValue)", folder)
             save(PillView(content: .working, signal: signal, size: size), "pill-working-\(size.rawValue)", folder)
         }
         save(PillView(content: .message("Copied to the clipboard"), signal: signal), "pill-message", folder)
     }
 
-    private static func save<Content: View>(_ view: Content, _ name: String, _ folder: String) {
+    private static func save<Content: View>(_ view: Content, _ name: String, _ folder: String, height: CGFloat? = nil) {
         let host = NSHostingView(rootView: view.preferredColorScheme(.dark))
         host.appearance = NSAppearance(named: .darkAqua)
-        let size = host.fittingSize
+        let size = height.map { NSSize(width: 500, height: $0) } ?? host.fittingSize
         host.frame = NSRect(origin: .zero, size: size)
         let window = NSWindow(contentRect: host.frame, styleMask: .borderless, backing: .buffered, defer: false)
         window.appearance = NSAppearance(named: .darkAqua)

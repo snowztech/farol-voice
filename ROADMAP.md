@@ -4,6 +4,8 @@ The goal: a voice assistant for your terminal and agents, with dictation that wo
 
 Farol Voice is its own app, so it works whether Farol is open or not, and Farol itself carries no voice code. Everything runs on your Mac.
 
+The end goal is voice only: control Farol and your agents without touching the keyboard or looking at the screen, on your Mac and later from your iPhone. The rules for understanding you live in `VoiceCore`, so the phone can share them.
+
 ## How we'll know it's good
 
 A step isn't done until it clears its bar in real use. These are starting numbers, and they can change once we've lived with them.
@@ -52,12 +54,14 @@ The first version anyone can download, before it controls Farol. It only claims 
 
 ## 3. Control Farol
 
-Done when you can switch sessions and message agents from any app, and it opens Farol if it's closed.
+In progress. Done when you can switch sessions and message agents from any app, and it opens Farol if it's closed.
 
-- A second key to tell Farol what to do: go to a session, message one, start a task
-- Each of these first as a small PR in Farol's socket: its own permission, focus a session, a send that only goes through if the session is still waiting on the same question
-- Launch Farol and wait for its socket when it's closed
-- A shell command spoken aloud is always read back and only runs after you say yes
+- [x] Farol's socket checks it's really Farol Voice, behind a setting in Farol
+- [x] A second key to tell Farol what to do: go to a session, message one, start a task
+- [x] A send only goes through if the session isn't waiting on a question nobody read
+- [x] Opens Farol when it's closed, and waits for it
+- [ ] Use it on real work, including sidebars with repeated names
+- [ ] A shell command spoken aloud is always read back and only runs after you say yes
 
 ## 4. Spoken replies
 
@@ -68,7 +72,15 @@ Hear what agents ask, and answer them, even minutes later.
 - One voice at a time, with questions first, and never talking over you
 - After it speaks, answer without pressing anything
 
-## 5. Conductor
+## 5. "OK Farol"
+
+Needed for voice only: no keyboard, no screen. It comes once the assistant can answer out loud. It's one more toggle in Settings, and works from any app.
+
+- Train a custom model with openWakeWord, since off-the-shelf keyword spotters don't know the word Farol
+- Check each wake again with the speech recognizer, to reach the false wake bar
+- Test on real voices: at the desk, across the room, on a headset, several accents, and a full day of negatives
+
+## 6. Conductor
 
 A small, fast agent that hears you, works out which session you mean, and acts.
 
@@ -76,14 +88,6 @@ A small, fast agent that hears you, works out which session you mean, and acts.
 - Routing, with the target locked and shown before anything is sent
 - Rebuilding your request from session context, with your approval before it's sent
 - Plain rules stay as the instant path, and the language model handles the rest, on your own key or running locally
-
-## 6. "OK Farol"
-
-Comes once the assistant is worth waking. It's one more toggle in Settings, and works from any app.
-
-- Train a custom model with openWakeWord, since off-the-shelf keyword spotters don't know the word Farol
-- Check each wake again with the speech recognizer, to reach the false wake bar
-- Test on real voices: at the desk, across the room, on a headset, several accents, and a full day of negatives
 
 ## 7. Natural talking
 
@@ -98,7 +102,7 @@ The big launch, once it runs your agents by voice, with an uncut recording of an
 
 ## 9. Phone
 
-Voice in Farol for iPhone over Remote, to talk to your agents away from your desk.
+A voice mode in Farol for iPhone: it understands you with `VoiceCore`, and Farol carries it out over Remote. Probably a talk button and hands-free while the app is open, since iOS limits listening in the background.
 
 ## 10. Chains and PRs by voice
 

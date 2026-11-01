@@ -6,13 +6,17 @@ import VoiceCore
 struct SettingsView: View {
     enum Section: String, CaseIterable {
         case general = "General"
-        case speech = "Speech"
+        case dictation = "Dictation"
+        case farol = "Farol"
+        case models = "Models"
         case about = "About"
 
         var symbol: String {
             switch self {
             case .general: "gearshape"
-            case .speech: "waveform"
+            case .dictation: "text.cursor"
+            case .farol: "light.beacon.max"
+            case .models: "square.stack.3d.up"
             case .about: "info.circle"
             }
         }
@@ -28,8 +32,16 @@ struct SettingsView: View {
     @State private var modelToDelete: VoiceModel?
     @State private var newWord = ""
     @State private var tryIt = ""
+    @State var farolStatus: FarolStatus?
+    /// Asks the window to fit this much height. It's only asked when a tab opens, so a size you chose stays until you change tabs.
+    var onFit: ((CGFloat) -> Void)?
+    @State private var fitNext = true
+
+    /// The tabs above the scrolling part.
+    private static let tabsHeight: CGFloat = 64
 
     private let permissionCheck = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private let farolCheck = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -42,21 +54,29 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity)
             .overlay(alignment: .bottom) { Rectangle().fill(Theme.line).frame(height: 1) }
 
-            VStack(alignment: .leading, spacing: 0) {
-                switch section {
-                case .general: general
-                case .speech: speech
-                case .about: about
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    switch section {
+                    case .general: general
+                    case .dictation: dictation
+                    case .farol: farol
+                    case .models: models
+                    case .about: about
+                    }
                 }
+                .padding(.horizontal, 28)
+                .padding(.top, 2)
+                .padding(.bottom, 22)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(GeometryReader { Color.clear.preference(key: ContentHeight.self, value: $0.size.height) })
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 2)
-            .padding(.bottom, 22)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        // The window takes its height from the tab showing, so no tab has empty space.
-        .frame(width: 500)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(minWidth: 500, maxWidth: .infinity, minHeight: 300, maxHeight: .infinity)
+        .onPreferenceChange(ContentHeight.self) { height in
+            guard fitNext, height > 0 else { return }
+            fitNext = false
+            onFit?(height + Self.tabsHeight)
+        }
         .background(Theme.background)
         .foregroundStyle(Theme.text)
         .preferredColorScheme(.dark)
@@ -65,6 +85,11 @@ struct SettingsView: View {
             accessibility = Permissions.accessibility
         }
         .onAppear(perform: library.refreshSizes)
+        .onChange(of: section) { _, _ in
+            fitNext = true
+            checkFarol()
+        }
+        .onReceive(farolCheck) { _ in checkFarol() }
         .alert(item: $modelToDelete) { model in
             Alert(
                 title: Text("Delete \(model.title)?"),
@@ -81,19 +106,20 @@ struct SettingsView: View {
         if microphone != .authorized || !accessibility {
             GroupTitle(title: "Needs your OK")
             PermissionRows(microphone: microphone, accessibility: accessibility)
-        }
-        GroupTitle(title: "Dictation")
-        SettingRow(title: "Hold to talk",
-                   detail: preferences.talkKey == .fn ? "If Fn opens the emoji picker, change it in System Settings, Keyboard." : nil) {
-            TalkKeyPicker(preferences: preferences)
+            GroupTitle(title: "Startup")
+        } else {
+            GroupTitle(title: "Startup")
         }
         SettingRow(title: "Start at login", detail: loginProblem) {
             Toggle("", isOn: $startAtLogin).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
                 .onChange(of: startAtLogin) { _, on in setStartAtLogin(on) }
         }
         GroupTitle(title: "Waveform")
-        PillPreview(size: preferences.waveSize)
-            .padding(.top, 6)
+        HStack(spacing: 10) {
+            PillPreview(title: "Dictating", size: preferences.waveSize, command: false)
+            PillPreview(title: "Telling Farol", size: preferences.waveSize, command: true)
+        }
+        .padding(.top, 6)
         SettingRow(title: "Size") {
             Picker("Waveform size", selection: $preferences.waveSize) {
                 ForEach(WaveSize.allCases) { Text($0.title).tag($0) }
@@ -103,19 +129,18 @@ struct SettingsView: View {
             .controlSize(.small)
             .fixedSize()
         }
-        GroupTitle(title: "Try it")
+    }
+
+    @ViewBuilder private var dictation: some View {
+        GroupTitle(title: "Type with your voice, in any app")
+        SettingRow(title: "Hold to talk",
+                   detail: preferences.talkKey == .fn ? "If Fn opens the emoji picker, change it in System Settings, Keyboard." : nil) {
+            TalkKeyPicker(preferences: preferences)
+        }
         TextField("Try it", text: $tryIt, prompt: Text("Click here, hold \(preferences.talkKey.title) and talk").foregroundColor(Theme.muted))
             .labelsHidden()
             .modifier(FieldStyle())
-            .padding(.top, 6)
-    }
-
-    @ViewBuilder private var speech: some View {
-        GroupTitle(title: "Models")
-        ForEach(VoiceModel.allCases, content: modelRow)
-        if let problem = library.problem {
-            Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)
-        }
+            .padding(.top, 12)
         GroupTitle(title: "Your words")
         TextField("Add a word", text: $newWord, prompt: Text("Add a name or term, then press Return").foregroundColor(Theme.muted))
             .labelsHidden()
@@ -133,8 +158,80 @@ struct SettingsView: View {
         }
         Text("Close matches become exactly what you add, like Farrol becoming Farol.")
             .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 10)
+    }
+
+    @ViewBuilder private var farol: some View {
+        GroupTitle(title: "Control Farol and your agents")
+        farolStatusRow
+        SettingRow(title: "Hold to tell Farol") {
+            Picker("Hold to tell Farol", selection: $preferences.commandKey) {
+                ForEach(TalkKey.allCases) { Text($0.title).tag($0) }
+            }
+            .labelsHidden()
+            .controlSize(.small)
+            .fixedSize()
+        }
+        GroupTitle(title: "What you can say")
+        VStack(alignment: .leading, spacing: 0) {
+            sayRow("Open Farol", "From any app, even if it's closed")
+            sayRow("Go to auth", "Switch to a session, by name or branch")
+            sayRow("Tell auth to run the tests", "Types it there. You press Return")
+            sayRow("...and send it", "Sends after a moment. Press any key to stop")
+            sayRow("New task, add a search box", "Starts an agent in its own worktree")
+        }
+        Text("It reads session names and status, never your conversations.")
+            .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 10)
+    }
+
+    private func sayRow(_ phrase: String, _ meaning: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 16) {
+            Text(phrase).font(.system(size: 12.5, design: .monospaced)).frame(width: 216, alignment: .leading)
+            Text(meaning).font(.system(size: 11.5)).foregroundStyle(Theme.muted)
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 6)
+    }
+
+    private var farolStatusRow: some View {
+        let (title, detail, action) = describe(farolStatus)
+        return SettingRow(title: title, detail: detail) {
+            if farolStatus == .ready {
+                Circle().fill(Theme.beam).frame(width: 7, height: 7).padding(.horizontal, 9).accessibilityLabel("Connected")
+            } else if let action {
+                QuietButton(title: action, prominent: true, action: Commander.openFarol)
+            }
+        }
+    }
+
+    private func describe(_ status: FarolStatus?) -> (String, String?, String?) {
+        switch status {
+        case .ready: ("Connected to Farol", nil, nil)
+        case .closed: ("Farol is closed", "It opens by itself when you give a command.", "Open Farol")
+        case .notInstalled: ("Farol isn't installed", "Dictation works without it. This needs the Farol terminal.", "Get Farol")
+        case .tooOld: ("Farol needs an update", "Update it from Farol's menu, then come back.", "Open Farol")
+        case .needsSetting: ("One setting to turn on", "In Farol: Settings, Agents, Let Farol Voice control sessions.", "Open Farol")
+        case .notVerified: ("This build can't control Farol", "Farol only accepts signed builds of Farol Voice.", nil)
+        case .unreachable: ("Can't reach Farol", "Try again in a moment.", "Open Farol")
+        case nil: ("Checking Farol", nil, nil)
+        }
+    }
+
+    private func checkFarol() {
+        guard section == .farol else { return }
+        Task {
+            let status = await Task.detached { Commander.status() }.value
+            farolStatus = status
+        }
+    }
+
+    @ViewBuilder private var models: some View {
+        GroupTitle(title: "Speech models")
+        ForEach(VoiceModel.allCases, content: modelRow)
+        if let problem = library.problem {
+            Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)
+        }
         Text("Speech runs on this Mac. Audio is never sent anywhere or saved.")
-            .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 3)
+            .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 10)
     }
 
     @ViewBuilder private var about: some View {
@@ -222,7 +319,9 @@ struct SettingsView: View {
 
 /// The pill on a stand-in screen, as if someone were talking and it were then thinking.
 private struct PillPreview: View {
+    let title: String
     let size: WaveSize
+    let command: Bool
 
     @State private var signal = VoiceSignal()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -231,15 +330,19 @@ private struct PillPreview: View {
     private static let thinking = 1.6
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
-            let time = timeline.date.timeIntervalSinceReferenceDate
-            let moment = time.truncatingRemainder(dividingBy: Self.talking + Self.thinking)
-            let isTalking = reduceMotion || moment < Self.talking
-            let _ = signal.target = reduceMotion ? 0.7 : Self.voice(at: time)
-            PillView(content: isTalking ? .listening : .working, signal: signal, size: size)
+        VStack(spacing: 8) {
+            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
+                let time = timeline.date.timeIntervalSinceReferenceDate
+                let moment = time.truncatingRemainder(dividingBy: Self.talking + Self.thinking)
+                let isTalking = reduceMotion || moment < Self.talking
+                let _ = signal.target = reduceMotion ? 0.7 : Self.voice(at: time)
+                PillView(content: isTalking ? .listening(command: command) : .working, signal: signal, size: size)
+            }
+            .frame(height: 54)
+            Text(title).font(.system(size: 11)).foregroundStyle(Theme.muted)
         }
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
-        .frame(height: 76)
         .background(RoundedRectangle(cornerRadius: 8).fill(Theme.surface))
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.line))
         .accessibilityHidden(true)
@@ -283,6 +386,13 @@ private struct PulsingIcon: View {
                              with: .color(Color(red: 0x13 / 255, green: 0x18 / 255, blue: 0x25 / 255).opacity(dim * 0.55)))
             }
         }
+    }
+}
+
+private struct ContentHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 

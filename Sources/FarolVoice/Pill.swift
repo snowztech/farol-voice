@@ -43,9 +43,10 @@ final class Pill {
         self.preferences = preferences
     }
 
-    func showListening() {
+    func showListening(command: Bool = false) {
         signal.target = 0
-        present(PillView(content: .listening, signal: signal, size: preferences.waveSize), accessibility: "Listening")
+        present(PillView(content: .listening(command: command), signal: signal, size: preferences.waveSize),
+                accessibility: command ? "Listening for Farol" : "Listening")
     }
 
     func showWorking() {
@@ -104,7 +105,7 @@ final class VoiceSignal {
 
 struct PillView: View {
     enum Content {
-        case listening
+        case listening(command: Bool)
         case working
         case message(String)
     }
@@ -122,7 +123,14 @@ struct PillView: View {
     var body: some View {
         ZStack {
             switch content {
-            case .listening: bars(sweeping: false)
+            case .listening(let command):
+                // Telling Farol looks different from dictating, so you know whether your words will be typed.
+                HStack(spacing: size.barGap * 3) {
+                    if command {
+                        Image(nsImage: Self.lighthouse).resizable().frame(width: size.tallest, height: size.tallest)
+                    }
+                    bars(sweeping: false)
+                }
             case .working: bars(sweeping: true)
             case .message(let text): Text(text).foregroundStyle(Theme.text).lineLimit(1)
             }
@@ -139,6 +147,37 @@ struct PillView: View {
         .fixedSize()
         // Room for the rounded edge, since the window's size can round down by a fraction of a point.
         .padding(2)
+    }
+
+    private static let lighthouse = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
+        NSColor(Theme.text).setFill()
+        let tower = NSBezierPath()
+        tower.move(to: NSPoint(x: 6, y: 2.5))
+        tower.line(to: NSPoint(x: 12, y: 2.5))
+        tower.line(to: NSPoint(x: 10.6, y: 10.5))
+        tower.line(to: NSPoint(x: 7.4, y: 10.5))
+        tower.close()
+        tower.fill()
+        NSBezierPath(rect: NSRect(x: 4.5, y: 1.2, width: 9, height: 1.3)).fill()
+        NSBezierPath(rect: NSRect(x: 7.6, y: 11.3, width: 2.8, height: 2.4)).fill()
+        let roof = NSBezierPath()
+        roof.move(to: NSPoint(x: 7.1, y: 14.3))
+        roof.line(to: NSPoint(x: 10.9, y: 14.3))
+        roof.line(to: NSPoint(x: 9, y: 16.4))
+        roof.close()
+        roof.fill()
+        NSColor(Theme.beam).setStroke()
+        for side in [CGFloat(-1), 1] {
+            let beam = NSBezierPath()
+            beam.lineWidth = 1.6
+            beam.lineCapStyle = .round
+            beam.lineJoinStyle = .round
+            beam.move(to: NSPoint(x: 9 + side * 6.8, y: 14.6))
+            beam.line(to: NSPoint(x: 9 + side * 3.6, y: 12.5))
+            beam.line(to: NSPoint(x: 9 + side * 6.8, y: 10.4))
+            beam.stroke()
+        }
+        return true
     }
 
     private func bars(sweeping: Bool) -> some View {

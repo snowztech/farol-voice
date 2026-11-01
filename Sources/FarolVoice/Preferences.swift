@@ -47,13 +47,24 @@ enum TalkKey: String, CaseIterable, Identifiable {
 final class Preferences: ObservableObject {
     private enum Key {
         static let talkKey = "talkKey"
+        static let commandKey = "commandKey"
         static let customWords = "customWords"
         static let setupDone = "setupDone"
         static let waveSize = "waveSize"
     }
 
+    /// The two keys can't be the same, so choosing one the other has swaps them.
     @Published var talkKey: TalkKey {
-        didSet { UserDefaults.standard.set(talkKey.rawValue, forKey: Key.talkKey) }
+        didSet {
+            UserDefaults.standard.set(talkKey.rawValue, forKey: Key.talkKey)
+            if commandKey == talkKey { commandKey = oldValue }
+        }
+    }
+    @Published var commandKey: TalkKey {
+        didSet {
+            UserDefaults.standard.set(commandKey.rawValue, forKey: Key.commandKey)
+            if talkKey == commandKey { talkKey = oldValue }
+        }
     }
     /// As typed in Settings: words separated by commas.
     @Published var customWords: String {
@@ -73,7 +84,10 @@ final class Preferences: ObservableObject {
 
     init() {
         let defaults = UserDefaults.standard
-        talkKey = defaults.string(forKey: Key.talkKey).flatMap(TalkKey.init) ?? .fn
+        let talk = defaults.string(forKey: Key.talkKey).flatMap(TalkKey.init) ?? .fn
+        talkKey = talk
+        commandKey = defaults.string(forKey: Key.commandKey).flatMap(TalkKey.init).flatMap { $0 == talk ? nil : $0 }
+            ?? (talk == .rightOption ? .fn : .rightOption)
         customWords = defaults.string(forKey: Key.customWords) ?? "Farol"
         waveSize = defaults.string(forKey: Key.waveSize).flatMap(WaveSize.init) ?? .compact
     }

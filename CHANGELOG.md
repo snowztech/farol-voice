@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- A second key to tell Farol what to do from any app: open Farol, go to a session, message one, or start a task. Needs a Farol with Settings, Agents, Let Farol Voice control sessions.
+- Settings has separate tabs for General, Dictation, Farol and Models, and the Farol tab shows if it's connected and what you can say.
+
 ## [0.1.1] - 2026-11-01
 
 No changes to the app itself.
