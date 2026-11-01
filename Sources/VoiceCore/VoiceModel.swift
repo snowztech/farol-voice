@@ -18,10 +18,17 @@ public enum VoiceModel: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    public var detail: String {
+    public var strengths: String {
         switch self {
-        case .parakeetV3: "Fast. English and 24 more languages, most of them European. About 600 MB."
-        case .whisperTurbo: "Slower, with about 100 languages. A larger download."
+        case .parakeetV3: "Fast. English and 24 more languages, most of them European."
+        case .whisperTurbo: "Slower, with about 100 languages."
+        }
+    }
+
+    public var downloadSize: String {
+        switch self {
+        case .parakeetV3: "About 600 MB."
+        case .whisperTurbo: "A larger download."
         }
     }
 

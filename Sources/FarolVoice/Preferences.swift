@@ -16,6 +16,7 @@ final class Preferences: ObservableObject {
     private enum Key {
         static let talkKey = "talkKey"
         static let customWords = "customWords"
+        static let setupDone = "setupDone"
     }
 
     @Published var talkKey: TalkKey {
@@ -24,6 +25,11 @@ final class Preferences: ObservableObject {
     /// As typed in Settings: words separated by commas.
     @Published var customWords: String {
         didSet { UserDefaults.standard.set(customWords, forKey: Key.customWords) }
+    }
+
+    var setupDone: Bool {
+        get { UserDefaults.standard.bool(forKey: Key.setupDone) }
+        set { UserDefaults.standard.set(newValue, forKey: Key.setupDone) }
     }
 
     var words: [String] { DictationText.words(from: customWords) }

@@ -73,7 +73,7 @@ final class Pill {
 }
 
 /// Between updates, the bars ease toward the latest level: quick to rise with your voice, slower to fall.
-private final class VoiceSignal {
+final class VoiceSignal {
     var target = 0.0
     private(set) var shown = 0.0
 
@@ -83,7 +83,7 @@ private final class VoiceSignal {
     }
 }
 
-private struct PillView: View {
+struct PillView: View {
     enum Content {
         case listening
         case working
@@ -108,16 +108,17 @@ private struct PillView: View {
             switch content {
             case .listening: bars(sweeping: false)
             case .working: bars(sweeping: true)
-            case .message(let text): Text(text).foregroundStyle(.white).lineLimit(1)
+            case .message(let text): Text(text).foregroundStyle(Theme.text).lineLimit(1)
             }
         }
         .font(.system(size: 11.5, weight: .medium))
         .padding(.horizontal, 14)
         .frame(height: 30)
-        .background(Color(white: 0.09), in: Capsule())
-        .overlay(Capsule().strokeBorder(.white.opacity(0.14), lineWidth: 1))
+        .background(Theme.background, in: Capsule())
+        .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
         .fixedSize()
-        .padding(1)
+        // Room for the rounded edge, since the window's size can round down by a fraction of a point.
+        .padding(2)
     }
 
     private func bars(sweeping: Bool) -> some View {
@@ -131,7 +132,9 @@ private struct PillView: View {
                     let height = sweeping ? Self.lowest : barHeight(bar, level: level, time: time)
                     let rect = CGRect(x: x, y: (size.height - height) / 2, width: Self.barWidth, height: height)
                     let opacity = sweeping ? beamOpacity(bar, time: time) : 0.6 + 0.4 * level
-                    context.fill(Path(roundedRect: rect, cornerRadius: Self.barWidth / 2), with: .color(.white.opacity(opacity)))
+                    // The beam's blue while it thinks, and plain while it listens, like the two colors in Farol's icon.
+                    let color = sweeping ? Theme.beam : Theme.text
+                    context.fill(Path(roundedRect: rect, cornerRadius: Self.barWidth / 2), with: .color(color.opacity(opacity)))
                 }
             }
         }

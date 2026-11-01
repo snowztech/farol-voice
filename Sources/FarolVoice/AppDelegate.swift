@@ -3,6 +3,7 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
+    private var setupWindow: NSWindow?
     private var menuBar: MenuBar?
     private var dictation: Dictation?
     private let library = ModelLibrary()
@@ -11,24 +12,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let dictation = Dictation(library: library, preferences: preferences, openSettings: { [weak self] in self?.showSettings() })
         self.dictation = dictation
-        menuBar = MenuBar(dictation: dictation, openSettings: { [weak self] in self?.showSettings() })
+        menuBar = MenuBar(dictation: dictation, library: library, preferences: preferences, openSettings: { [weak self] in self?.showSettings() })
         dictation.begin()
-        if !library.isReady || !Permissions.accessibility || Permissions.microphone != .authorized {
+        if !preferences.setupDone {
+            showSetup()
+        } else if !library.isReady || !Permissions.accessibility || Permissions.microphone != .authorized {
             showSettings()
         }
     }
 
-    private func showSettings() {
-        if settingsWindow == nil {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 640),
-                                  styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-            window.title = "Farol Voice"
-            window.isReleasedWhenClosed = false
-            window.contentView = NSHostingView(rootView: SettingsView(library: library, preferences: preferences))
-            window.center()
-            settingsWindow = window
+    private func showSetup() {
+        let view = SetupView(library: library, preferences: preferences) { [weak self] in
+            self?.preferences.setupDone = true
+            self?.setupWindow?.close()
         }
+        let window = Self.window(title: "Set up Farol Voice", rootView: view)
+        setupWindow = window
+        present(window)
+    }
+
+    private func showSettings() {
+        let window = settingsWindow ?? Self.window(title: "Farol Voice", rootView: SettingsView(library: library, preferences: preferences))
+        settingsWindow = window
+        present(window)
+    }
+
+    private func present(_ window: NSWindow) {
         NSApp.activate(ignoringOtherApps: true)
-        settingsWindow?.makeKeyAndOrderFront(nil)
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    /// The window takes its size from its content, so there's never an empty gap or a scroll bar.
+    private static func window<Content: View>(title: String, rootView: Content) -> NSWindow {
+        let host = NSHostingController(rootView: rootView)
+        host.sizingOptions = [.preferredContentSize]
+        let window = NSWindow(contentViewController: host)
+        window.styleMask = [.titled, .closable, .miniaturizable]
+        window.title = title
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.backgroundColor = Theme.window
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.isReleasedWhenClosed = false
+        window.center()
+        return window
     }
 }
