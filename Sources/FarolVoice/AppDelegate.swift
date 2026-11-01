@@ -8,12 +8,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var dictation: Dictation?
     private let library = ModelLibrary()
     private let preferences = Preferences()
+    private let updates = Updates()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = Self.editMenu()
         let dictation = Dictation(library: library, preferences: preferences, openSettings: { [weak self] in self?.showSettings() })
         self.dictation = dictation
-        menuBar = MenuBar(dictation: dictation, library: library, preferences: preferences, openSettings: { [weak self] in self?.showSettings() })
+        menuBar = MenuBar(dictation: dictation, library: library, preferences: preferences, updates: updates, openSettings: { [weak self] in self?.showSettings() })
         dictation.begin()
         if !preferences.setupDone {
             showSetup()

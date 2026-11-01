@@ -7,6 +7,8 @@ let package = Package(
     platforms: [.macOS(.v15)],
     dependencies: [
         .package(url: "https://github.com/soniqo/speech-swift", exact: "0.0.29"),
+        // Exact, since scripts/appcast.sh downloads the signing tools of this same version.
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.0"),
     ],
     targets: [
         // What can be wrong without a microphone: models, text clean-up. No audio, and tested.
@@ -17,7 +19,7 @@ let package = Package(
             .product(name: "WhisperASR", package: "speech-swift"),
         ]),
         // The menu bar app.
-        .executableTarget(name: "FarolVoice", dependencies: ["VoiceCore", "VoiceEngine"], linkerSettings: [.linkedFramework("Carbon")]),
+        .executableTarget(name: "FarolVoice", dependencies: ["VoiceCore", "VoiceEngine", .product(name: "Sparkle", package: "Sparkle")], linkerSettings: [.linkedFramework("Carbon")]),
         // For measuring models from the terminal.
         .executableTarget(name: "farol-voice", dependencies: ["VoiceCore", "VoiceEngine"]),
         .testTarget(name: "VoiceCoreTests", dependencies: ["VoiceCore"]),

@@ -5,15 +5,17 @@ final class MenuBar: NSObject, NSMenuDelegate {
     private let dictation: Dictation
     private let library: ModelLibrary
     private let preferences: Preferences
+    private let updates: Updates
     private let openSettings: () -> Void
     private let status = NSMenuItem(title: "", action: #selector(showSettings), keyEquivalent: "")
     private let model = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let copyLast = NSMenuItem(title: "Copy Last Transcript", action: #selector(copyTranscript), keyEquivalent: "")
 
-    init(dictation: Dictation, library: ModelLibrary, preferences: Preferences, openSettings: @escaping () -> Void) {
+    init(dictation: Dictation, library: ModelLibrary, preferences: Preferences, updates: Updates, openSettings: @escaping () -> Void) {
         self.dictation = dictation
         self.library = library
         self.preferences = preferences
+        self.updates = updates
         self.openSettings = openSettings
         super.init()
         item.button?.image = Self.icon(lit: false)
@@ -31,6 +33,11 @@ final class MenuBar: NSObject, NSMenuDelegate {
         let settings = NSMenuItem(title: "Settings…", action: #selector(showSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
+        if updates.canCheck {
+            let check = NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
+            check.target = self
+            menu.addItem(check)
+        }
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Farol Voice", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         item.menu = menu
@@ -55,6 +62,11 @@ final class MenuBar: NSObject, NSMenuDelegate {
 
     @objc private func copyTranscript() {
         if let text = dictation.lastTranscript { Typer.copy(text) }
+    }
+
+    @objc private func checkForUpdates() {
+        NSApp.activate(ignoringOtherApps: true)
+        updates.check()
     }
 
     @objc private func showSettings() {
