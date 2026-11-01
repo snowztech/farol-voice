@@ -39,12 +39,14 @@ In progress, and done when it has replaced other dictation apps for a week of re
 The first version anyone can download, before it controls Farol. It only claims what works today.
 
 - [x] Its own app icon
-- [ ] Signed and notarized DMG
-- [ ] Automatic updates
+- [x] Signed and notarized DMG
+- [x] Automatic updates
 - [ ] A full license check of everything the app includes
 - [ ] A demo GIF in the README
 - [ ] Make this repo public
-- [ ] A one-page site at `voice.farol.sh`, linked from About
+- [x] A one-page site for `voice.farol.sh`
+- [ ] Link the site from About once it's live
+- [ ] A Homebrew cask
 
 **Next, and the reason this app exists: step 3.** Don't stop at dictation.
 

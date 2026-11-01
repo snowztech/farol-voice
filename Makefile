@@ -1,4 +1,4 @@
-.PHONY: build run test
+.PHONY: build run test dist
 
 build:
 	./scripts/bundle.sh
@@ -8,3 +8,7 @@ run: build
 
 test:
 	swift test
+
+# A signed, notarized DMG and zip. See RELEASING.md.
+dist:
+	./scripts/dist.sh
