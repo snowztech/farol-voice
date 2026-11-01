@@ -15,6 +15,11 @@ Hold a key, talk, let go, and your words appear wherever you were typing: your e
 
 It's the first step toward a voice assistant for your terminal and coding agents, working with [Farol](https://github.com/snowztech/farol). Today it's dictation, and that part is ready to use every day. See [what's next](ROADMAP.md).
 
+<p align="center">
+  <img src="site/setup.png" width="49%" alt="The setup window, with steps to allow the microphone and Accessibility, install a speech model and try it.">
+  <img src="site/settings.png" width="49%" alt="Settings, showing speech models to install and a list of your own words.">
+</p>
+
 ## What it does
 
 - **Works everywhere.** It types into any app, and puts your clipboard back afterwards.
