@@ -153,6 +153,9 @@ struct SettingsView: View {
                 .underline().font(.system(size: 12.5)).foregroundStyle(Theme.text)
             Text("Speech by Parakeet from NVIDIA (CC BY 4.0) and Whisper from OpenAI (MIT).")
                 .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 14)
+            // The string literal is read as Markdown, so snowztech becomes a link in the same words.
+            Text("© 2026 Lucas Neves Pereira, [snowztech](https://github.com/snowztech)")
+                .font(.system(size: 11.5)).foregroundStyle(Theme.muted).tint(Theme.text)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 22)
