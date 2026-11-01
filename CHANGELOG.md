@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-01
+
+Settings look like one app.
+
 ### Changed
 
 - Settings look the same on every tab: what you can say uses the regular rows, and pickers and buttons match.
