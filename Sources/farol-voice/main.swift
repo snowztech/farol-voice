@@ -1,6 +1,8 @@
 import AVFoundation
 import Foundation
 import SpeechWakeWord
+import VoiceCore
+import VoiceEngine
 import WakeWord
 
 let sampleRate = 16000.0
@@ -10,7 +12,7 @@ let usage = """
 usage:
   farol-voice listen [--threshold 0.05] [--boost 1]
   farol-voice score <corpus> [--threshold 0.05] [--boost 1]
-  farol-voice serve --model parakeet-v3|whisper-turbo --models <folder>
+  farol-voice transcribe <file.wav>... [--model parakeet-v3] [--words "Farol, snowztech"]
 
 A corpus has positive/ and negative/ folders of 16 kHz mono WAV files.
 """
@@ -137,6 +139,45 @@ func score(_ arguments: [String]) async throws {
     }
 }
 
+func transcribe(_ arguments: [String]) async throws {
+    var files: [String] = []
+    var model = VoiceModel.parakeetV3
+    var words: [String] = []
+    var index = 0
+    while index < arguments.count {
+        switch arguments[index] {
+        case "--model":
+            guard index + 1 < arguments.count, let chosen = VoiceModel(rawValue: arguments[index + 1]) else { fail(usage) }
+            model = chosen
+            index += 1
+        case "--words":
+            guard index + 1 < arguments.count else { fail(usage) }
+            words = DictationText.words(from: arguments[index + 1])
+            index += 1
+        default:
+            files.append(arguments[index])
+        }
+        index += 1
+    }
+    guard !files.isEmpty else { fail(usage) }
+    let engine = SpeechEngine(folder: SpeechEngine.defaultFolder)
+    let loading = Date()
+    try await engine.load(model, online: !engine.isInstalled(model)) { _, _ in }
+    print(String(format: "loaded in %.0f ms", Date().timeIntervalSince(loading) * 1000))
+    for file in files {
+        let audio = try AVAudioFile(forReading: URL(fileURLWithPath: file))
+        guard audio.processingFormat.sampleRate == sampleRate, audio.processingFormat.channelCount == 1,
+              let buffer = AVAudioPCMBuffer(pcmFormat: audio.processingFormat, frameCapacity: AVAudioFrameCount(audio.length)) else {
+            fail("\(file) isn't 16 kHz mono.")
+        }
+        try audio.read(into: buffer)
+        let samples = Array(UnsafeBufferPointer(start: buffer.floatChannelData![0], count: Int(buffer.frameLength)))
+        let started = Date()
+        let text = try await engine.transcribe(samples)
+        print(String(format: "%5.0f ms  ", Date().timeIntervalSince(started) * 1000) + DictationText.clean(text, customWords: words))
+    }
+}
+
 // Keeps wakes appearing live when the output is piped to a log.
 setvbuf(stdout, nil, _IOLBF, 0)
 
@@ -145,7 +186,7 @@ do {
     switch arguments.first {
     case "listen": try await listen(Array(arguments.dropFirst()))
     case "score": try await score(Array(arguments.dropFirst()))
-    case "serve": try await serve(Array(arguments.dropFirst()))
+    case "transcribe": try await transcribe(Array(arguments.dropFirst()))
     default: fail(usage)
     }
 } catch {

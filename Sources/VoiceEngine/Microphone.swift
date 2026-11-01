@@ -1,16 +1,18 @@
 import AVFoundation
 
-enum MicrophoneError: LocalizedError {
+public enum MicrophoneError: LocalizedError {
     case unavailable
 
-    var errorDescription: String? { "No microphone is available." }
+    public var errorDescription: String? { "No microphone is available." }
 }
 
 /// The default input as 16 kHz mono. Make a new one per recording, so it follows the input the Mac is using now.
-final class Microphone {
+public final class Microphone {
+    public init() {}
+
     private let engine = AVAudioEngine()
 
-    func start(_ onSamples: @escaping ([Float]) -> Void) throws {
+    public func start(_ onSamples: @escaping ([Float]) -> Void) throws {
         let input = engine.inputNode.outputFormat(forBus: 0)
         guard input.sampleRate > 0,
               let output = AVAudioFormat(standardFormatWithSampleRate: 16000, channels: 1),
@@ -35,7 +37,7 @@ final class Microphone {
         try engine.start()
     }
 
-    func stop() {
+    public func stop() {
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
     }
