@@ -44,9 +44,9 @@ The first version anyone can download, before it controls Farol. It only claims 
 - [x] Its own app icon
 - [x] Signed and notarized DMG
 - [x] Automatic updates
-- [ ] A full license check of everything the app includes
+- [x] A full license check of everything the app includes
 - [ ] A demo GIF in the README
-- [ ] Make this repo public
+- [x] Make this repo public
 - [x] A one-page site for `voice.farol.sh`
 - [ ] Link the site from About once it's live
 - [ ] A Homebrew cask
