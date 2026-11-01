@@ -10,10 +10,15 @@ enum Snapshot {
         let signal = VoiceSignal()
         signal.target = 0.8
         for _ in 0..<30 { _ = signal.step() }
-        save(SettingsView(library: library, preferences: preferences), "settings", folder)
+        NSApp.applicationIconImage = NSImage(contentsOfFile: "assets/FarolVoice.icns")
+        for section in SettingsView.Section.allCases {
+            save(SettingsView(library: library, preferences: preferences, section: section), "settings-\(section.rawValue)", folder)
+        }
         save(SetupView(library: library, preferences: preferences) {}, "setup", folder)
-        save(PillView(content: .listening, signal: signal), "pill-listening", folder)
-        save(PillView(content: .working, signal: signal), "pill-working", folder)
+        for size in WaveSize.allCases {
+            save(PillView(content: .listening, signal: signal, size: size), "pill-listening-\(size.rawValue)", folder)
+            save(PillView(content: .working, signal: signal, size: size), "pill-working-\(size.rawValue)", folder)
+        }
         save(PillView(content: .message("Copied to the clipboard"), signal: signal), "pill-message", folder)
     }
 

@@ -78,6 +78,33 @@ struct SettingRow<Control: View>: View {
     }
 }
 
+/// A sidebar item, drawn as Farol draws its own.
+struct NavItem: View {
+    let title: String
+    let selected: Bool
+    let action: () -> Void
+
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 13, weight: selected ? .medium : .regular))
+                    .foregroundStyle(selected ? Theme.text : Theme.muted)
+                Spacer()
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Theme.raised : hovering ? Theme.surface : .clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
 /// Plain words that light up under the mouse. The prominent kind is for the one thing to do next.
 struct QuietButton: View {
     let title: String

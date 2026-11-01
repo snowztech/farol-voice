@@ -49,7 +49,8 @@ struct SetupView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     marker(4, done: !tryIt.isEmpty, active: isReady)
-                    Text("Try it").font(.system(size: 13))
+                    Text(tryIt.isEmpty ? "Try it" : "It works. Now use it anywhere you can type.").font(.system(size: 13))
+                        .foregroundStyle(tryIt.isEmpty ? Theme.text : Theme.beam)
                     Spacer()
                     TalkKeyPicker(preferences: preferences)
                 }
@@ -60,6 +61,7 @@ struct SetupView: View {
             }
             .padding(.vertical, 12)
             .opacity(isReady ? 1 : 0.45)
+            .animation(.easeOut(duration: 0.18), value: tryIt.isEmpty)
 
             if let problem = library.problem {
                 Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.bottom, 8)

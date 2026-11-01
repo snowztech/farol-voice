@@ -20,7 +20,7 @@ final class Dictation {
     private let library: ModelLibrary
     private let preferences: Preferences
     private let openSettings: () -> Void
-    private let pill = Pill()
+    private let pill: Pill
     private var monitors: [Any] = []
     private var heldKey = false
     private var pendingStart: DispatchWorkItem?
@@ -34,6 +34,7 @@ final class Dictation {
         self.library = library
         self.preferences = preferences
         self.openSettings = openSettings
+        pill = Pill(preferences: preferences)
     }
 
     func begin() {

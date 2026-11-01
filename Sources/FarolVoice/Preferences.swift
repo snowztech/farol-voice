@@ -17,6 +17,7 @@ final class Preferences: ObservableObject {
         static let talkKey = "talkKey"
         static let customWords = "customWords"
         static let setupDone = "setupDone"
+        static let waveSize = "waveSize"
     }
 
     @Published var talkKey: TalkKey {
@@ -25,6 +26,10 @@ final class Preferences: ObservableObject {
     /// As typed in Settings: words separated by commas.
     @Published var customWords: String {
         didSet { UserDefaults.standard.set(customWords, forKey: Key.customWords) }
+    }
+
+    @Published var waveSize: WaveSize {
+        didSet { UserDefaults.standard.set(waveSize.rawValue, forKey: Key.waveSize) }
     }
 
     var setupDone: Bool {
@@ -38,6 +43,7 @@ final class Preferences: ObservableObject {
         let defaults = UserDefaults.standard
         talkKey = defaults.string(forKey: Key.talkKey).flatMap(TalkKey.init) ?? .fn
         customWords = defaults.string(forKey: Key.customWords) ?? "Farol"
+        waveSize = defaults.string(forKey: Key.waveSize).flatMap(WaveSize.init) ?? .compact
     }
 }
 

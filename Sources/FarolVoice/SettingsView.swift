@@ -4,8 +4,17 @@ import SwiftUI
 import VoiceCore
 
 struct SettingsView: View {
+    enum Section: String, CaseIterable {
+        case general = "General"
+        case words = "Words"
+        case models = "Models"
+        case appearance = "Appearance"
+        case about = "About"
+    }
+
     @ObservedObject var library: ModelLibrary
     @ObservedObject var preferences: Preferences
+    @State var section = Section.general
     @State private var microphone = Permissions.microphone
     @State private var accessibility = Permissions.accessibility
     @State private var startAtLogin = SMAppService.mainApp.status == .enabled
@@ -17,47 +26,36 @@ struct SettingsView: View {
     private let permissionCheck = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Heading(title: "Farol Voice", detail: "Hold a key, talk, and your words appear wherever you're typing.")
-
-            // Out of the way once it's done, since nobody needs to see it again.
-            if microphone != .authorized || !accessibility {
-                GroupTitle(title: "Needs your OK")
-                PermissionRows(microphone: microphone, accessibility: accessibility)
+        HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(Section.allCases, id: \.self) { item in
+                    NavItem(title: item.rawValue, selected: item == section) { section = item }
+                }
+                Spacer()
             }
+            .padding(.top, 8)
+            .padding(.horizontal, 10)
+            .frame(width: 160)
 
-            GroupTitle(title: "Dictation")
-            SettingRow(title: "Hold to talk",
-                       detail: preferences.talkKey == .fn ? "If Fn opens the emoji picker, change it in System Settings, Keyboard." : nil) {
-                TalkKeyPicker(preferences: preferences)
+            Rectangle().fill(Theme.line).frame(width: 1)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    switch section {
+                    case .general: general
+                    case .words: words
+                    case .models: models
+                    case .appearance: appearance
+                    case .about: about
+                    }
+                }
+                .padding(.horizontal, 32)
+                .padding(.top, 8)
+                .padding(.bottom, 24)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            SettingRow(title: "Start at login", detail: loginProblem) {
-                Toggle("", isOn: $startAtLogin).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
-                    .onChange(of: startAtLogin) { _, on in setStartAtLogin(on) }
-            }
-
-            GroupTitle(title: "Your words")
-            words
-
-            GroupTitle(title: "Models")
-            ForEach(VoiceModel.allCases, content: modelRow)
-            if let problem = library.problem {
-                Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)
-            }
-
-            GroupTitle(title: "Try it")
-            TextField("Try it", text: $tryIt, prompt: Text("Click here, hold \(preferences.talkKey.title) and talk").foregroundColor(Theme.muted))
-                .labelsHidden()
-                .modifier(FieldStyle())
-                .padding(.top, 6)
-
-            footer.padding(.top, 22)
         }
-        .padding(.horizontal, 32)
-        .padding(.top, 8)
-        .padding(.bottom, 24)
-        .frame(width: 500, alignment: .leading)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(width: 680, height: 500)
         .background(Theme.background)
         .foregroundStyle(Theme.text)
         .preferredColorScheme(.dark)
@@ -65,6 +63,7 @@ struct SettingsView: View {
             microphone = Permissions.microphone
             accessibility = Permissions.accessibility
         }
+        .onAppear(perform: library.refreshSizes)
         .alert(item: $modelToDelete) { model in
             Alert(
                 title: Text("Delete \(model.title)?"),
@@ -74,25 +73,96 @@ struct SettingsView: View {
         }
     }
 
-    private var words: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            TextField("Add a word", text: $newWord, prompt: Text("Add a name or term, then press Return").foregroundColor(Theme.muted))
-                .labelsHidden()
-                .modifier(FieldStyle())
-                .onSubmit {
-                    preferences.customWords = DictationText.list(preferences.customWords, adding: newWord)
-                    newWord = ""
-                }
-            if !preferences.words.isEmpty {
-                FlowLayout {
-                    ForEach(preferences.words, id: \.self, content: wordChip)
-                }
-            }
-            Text("Close matches become exactly what you add here, like Farrol becoming Farol.")
-                .font(.system(size: 11.5)).foregroundStyle(Theme.muted)
+    // MARK: Sections
+
+    @ViewBuilder private var general: some View {
+        Heading(title: "General", detail: "Hold a key, talk, and your words appear wherever you're typing.")
+        // Out of the way once it's done, since nobody needs to see it again.
+        if microphone != .authorized || !accessibility {
+            GroupTitle(title: "Needs your OK")
+            PermissionRows(microphone: microphone, accessibility: accessibility)
+            GroupTitle(title: "Dictation")
         }
-        .padding(.top, 6)
+        SettingRow(title: "Hold to talk",
+                   detail: preferences.talkKey == .fn ? "If Fn opens the emoji picker, change it in System Settings, Keyboard." : nil) {
+            TalkKeyPicker(preferences: preferences)
+        }
+        SettingRow(title: "Start at login", detail: loginProblem) {
+            Toggle("", isOn: $startAtLogin).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
+                .onChange(of: startAtLogin) { _, on in setStartAtLogin(on) }
+        }
+        GroupTitle(title: "Try it")
+        TextField("Try it", text: $tryIt, prompt: Text("Click here, hold \(preferences.talkKey.title) and talk").foregroundColor(Theme.muted))
+            .labelsHidden()
+            .modifier(FieldStyle())
+            .padding(.top, 6)
+        Text("Speech runs on this Mac. Audio is never sent anywhere or saved.")
+            .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 22)
     }
+
+    @ViewBuilder private var words: some View {
+        Heading(title: "Words", detail: "Names and terms to get right. Close matches become exactly what you add here, like Farrol becoming Farol.")
+        TextField("Add a word", text: $newWord, prompt: Text("Add a name or term, then press Return").foregroundColor(Theme.muted))
+            .labelsHidden()
+            .modifier(FieldStyle())
+            .padding(.top, 6)
+            .onSubmit {
+                preferences.customWords = DictationText.list(preferences.customWords, adding: newWord)
+                newWord = ""
+            }
+        if !preferences.words.isEmpty {
+            FlowLayout {
+                ForEach(preferences.words, id: \.self, content: wordChip)
+            }
+            .padding(.top, 10)
+        }
+    }
+
+    @ViewBuilder private var models: some View {
+        Heading(title: "Models", detail: "They run on this Mac, and need no network once installed.")
+        ForEach(VoiceModel.allCases, content: modelRow)
+        if let problem = library.problem {
+            Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)
+        }
+    }
+
+    @ViewBuilder private var appearance: some View {
+        Heading(title: "Appearance", detail: "What shows at the bottom of your screen while you talk.")
+        PillPreview(size: preferences.waveSize)
+            .padding(.top, 6)
+        SettingRow(title: "Waveform size") {
+            Picker("Waveform size", selection: $preferences.waveSize) {
+                ForEach(WaveSize.allCases) { Text($0.title).tag($0) }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .controlSize(.small)
+            .fixedSize()
+        }
+    }
+
+    @ViewBuilder private var about: some View {
+        VStack(spacing: 6) {
+            PulsingIcon().frame(width: 96, height: 96).padding(.bottom, 6)
+            Text("Farol Voice").font(.system(size: 20, weight: .semibold))
+            Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev")")
+                .font(.system(size: 12)).foregroundStyle(Theme.muted)
+            HStack(spacing: 0) {
+                Text("From ")
+                Link("Farol", destination: URL(string: "https://farol.sh")!).underline().foregroundStyle(Theme.text)
+                Text(", the terminal for coding agents.")
+            }
+            .font(.system(size: 12.5)).foregroundStyle(Theme.muted).padding(.top, 8)
+            Link("Source code on GitHub", destination: URL(string: "https://github.com/snowztech/farol-voice")!)
+                .underline().font(.system(size: 12.5)).foregroundStyle(Theme.text)
+            Text("Speech by Parakeet from NVIDIA (CC BY 4.0) and Whisper from OpenAI (MIT).")
+                .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 14)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 34)
+    }
+
+    // MARK: Parts
 
     private func wordChip(_ word: String) -> some View {
         HStack(spacing: 5) {
@@ -140,19 +210,6 @@ struct SettingsView: View {
         return "\(model.strengths) \(model.downloadSize)"
     }
 
-    private var footer: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text("Speech runs on this Mac. Audio is never sent anywhere or saved.")
-            HStack(spacing: 0) {
-                Text("From ")
-                Link("Farol", destination: URL(string: "https://farol.sh")!).underline().foregroundStyle(Theme.text)
-                Text(", the terminal for coding agents.")
-            }
-        }
-        .font(.system(size: 11.5))
-        .foregroundStyle(Theme.muted)
-    }
-
     private func setStartAtLogin(_ on: Bool) {
         do {
             if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
@@ -160,6 +217,72 @@ struct SettingsView: View {
         } catch {
             loginProblem = "Couldn't change that: \(error.localizedDescription)"
             startAtLogin = SMAppService.mainApp.status == .enabled
+        }
+    }
+}
+
+/// The pill on a stand-in screen, as if someone were talking and it were then thinking.
+private struct PillPreview: View {
+    let size: WaveSize
+
+    @State private var signal = VoiceSignal()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private static let talking = 3.2
+    private static let thinking = 1.6
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
+            let time = timeline.date.timeIntervalSinceReferenceDate
+            let moment = time.truncatingRemainder(dividingBy: Self.talking + Self.thinking)
+            let isTalking = reduceMotion || moment < Self.talking
+            let _ = signal.target = reduceMotion ? 0.7 : Self.voice(at: time)
+            PillView(content: isTalking ? .listening : .working, signal: signal, size: size)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 96)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Theme.surface))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.line))
+        .accessibilityHidden(true)
+    }
+
+    /// Syllables inside phrases: fast bumps under a slow swell, with short gaps, so it moves like speech.
+    private static func voice(at time: TimeInterval) -> Double {
+        let phrase = max(0, sin(time * 1.9) * 0.5 + 0.55)
+        let syllable = abs(sin(time * 7.3)) * 0.7 + abs(sin(time * 11.1)) * 0.3
+        return min(1, phrase * syllable * 1.15)
+    }
+}
+
+/// The app icon with its sound waves gently pulsing outward. Still, with Reduce Motion on.
+private struct PulsingIcon: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            Image(nsImage: NSApp.applicationIconImage).resizable()
+            if !reduceMotion {
+                TimelineView(.animation(minimumInterval: 1.0 / 30)) { timeline in
+                    Canvas { context, size in
+                        draw(in: &context, size: size, time: timeline.date.timeIntervalSinceReferenceDate)
+                    }
+                }
+            }
+        }
+        .accessibilityLabel("Farol Voice icon")
+    }
+
+    /// Dims the icon's own bars in turn, using the positions `scripts/make-icon.swift` draws them at.
+    private func draw(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
+        let scale = size.width / 1024
+        for sign in [CGFloat(1), -1] {
+            for (index, height) in [CGFloat(132), 96, 58].enumerated() {
+                let dim = 0.5 + 0.5 * sin(time * 2.4 - Double(index) * 0.9)
+                let x = 512 + sign * (118 + CGFloat(index) * 52)
+                let bar = CGRect(x: (x - 16) * scale, y: (398 - height / 2 - 1) * scale, width: 32 * scale, height: (height + 2) * scale)
+                context.fill(Path(roundedRect: bar, cornerRadius: 16 * scale),
+                             with: .color(Color(red: 0x13 / 255, green: 0x18 / 255, blue: 0x25 / 255).opacity(dim * 0.55)))
+            }
         }
     }
 }
