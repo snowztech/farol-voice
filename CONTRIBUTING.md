@@ -10,7 +10,7 @@ You need macOS 15 or later on Apple Silicon, and Xcode 26.
 make run
 ```
 
-macOS keeps its permissions across rebuilds when the app is signed with an Apple Development certificate, which `scripts/bundle.sh` uses if you have one. Without one, you'll be asked to allow Accessibility again after each build.
+`make run` builds **Farol Voice Dev**, with its own id and permissions, so it runs next to an installed Farol Voice without taking them away. Quit one before using the other, since both listen for your key. macOS keeps its permissions across rebuilds when the app is signed with an Apple Development certificate, which `scripts/bundle.sh` uses if you have one. Without one, you'll be asked to allow Accessibility again after each build.
 
 ## Before you open a PR
 

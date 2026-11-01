@@ -4,6 +4,14 @@ set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 app="$root/build/Farol Voice.app"
+# Dev builds get their own identity. macOS ties permissions to an app's id and signature, so a dev build sharing the release's id takes its permissions away.
+if [ "${UPDATES:-0}" = "1" ]; then
+  bundle_id="dev.farol.Voice"
+  name="Farol Voice"
+else
+  bundle_id="dev.farol.Voice.debug"
+  name="Farol Voice Dev"
+fi
 
 # Version from the latest v* tag. Builds after a tag read like 0.1.0-3-gabc1234, and -dirty marks uncommitted changes.
 described=$(git -C "$root" describe --tags --match 'v[0-9]*' --dirty 2>/dev/null || echo "v0.0.0-dev")
@@ -38,8 +46,8 @@ cat > "$app/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleIdentifier</key><string>dev.farol.Voice</string>
-  <key>CFBundleName</key><string>Farol Voice</string>
+  <key>CFBundleIdentifier</key><string>$bundle_id</string>
+  <key>CFBundleName</key><string>$name</string>
   <key>CFBundleExecutable</key><string>FarolVoice</string>
   <key>CFBundleIconFile</key><string>FarolVoice</string>
   <key>CFBundlePackageType</key><string>APPL</string>
