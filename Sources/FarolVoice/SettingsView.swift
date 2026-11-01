@@ -6,10 +6,16 @@ import VoiceCore
 struct SettingsView: View {
     enum Section: String, CaseIterable {
         case general = "General"
-        case words = "Words"
-        case models = "Models"
-        case appearance = "Appearance"
+        case speech = "Speech"
         case about = "About"
+
+        var symbol: String {
+            switch self {
+            case .general: "gearshape"
+            case .speech: "waveform"
+            case .about: "info.circle"
+            }
+        }
     }
 
     @ObservedObject var library: ModelLibrary
@@ -26,36 +32,31 @@ struct SettingsView: View {
     private let permissionCheck = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 2) {
+        VStack(spacing: 0) {
+            HStack(spacing: 4) {
                 ForEach(Section.allCases, id: \.self) { item in
-                    NavItem(title: item.rawValue, selected: item == section) { section = item }
+                    TabItem(title: item.rawValue, symbol: item.symbol, selected: item == section) { section = item }
                 }
-                Spacer()
             }
-            .padding(.top, 8)
-            .padding(.horizontal, 10)
-            .frame(width: 160)
+            .padding(.bottom, 10)
+            .frame(maxWidth: .infinity)
+            .overlay(alignment: .bottom) { Rectangle().fill(Theme.line).frame(height: 1) }
 
-            Rectangle().fill(Theme.line).frame(width: 1)
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    switch section {
-                    case .general: general
-                    case .words: words
-                    case .models: models
-                    case .appearance: appearance
-                    case .about: about
-                    }
+            VStack(alignment: .leading, spacing: 0) {
+                switch section {
+                case .general: general
+                case .speech: speech
+                case .about: about
                 }
-                .padding(.horizontal, 32)
-                .padding(.top, 8)
-                .padding(.bottom, 24)
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(.horizontal, 28)
+            .padding(.top, 2)
+            .padding(.bottom, 22)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: 680, height: 500)
+        // The window takes its height from the tab showing, so no tab has empty space.
+        .frame(width: 500)
+        .fixedSize(horizontal: false, vertical: true)
         .background(Theme.background)
         .foregroundStyle(Theme.text)
         .preferredColorScheme(.dark)
@@ -76,13 +77,12 @@ struct SettingsView: View {
     // MARK: Sections
 
     @ViewBuilder private var general: some View {
-        Heading(title: "General", detail: "Hold a key, talk, and your words appear wherever you're typing.")
         // Out of the way once it's done, since nobody needs to see it again.
         if microphone != .authorized || !accessibility {
             GroupTitle(title: "Needs your OK")
             PermissionRows(microphone: microphone, accessibility: accessibility)
-            GroupTitle(title: "Dictation")
         }
+        GroupTitle(title: "Dictation")
         SettingRow(title: "Hold to talk",
                    detail: preferences.talkKey == .fn ? "If Fn opens the emoji picker, change it in System Settings, Keyboard." : nil) {
             TalkKeyPicker(preferences: preferences)
@@ -91,17 +91,32 @@ struct SettingsView: View {
             Toggle("", isOn: $startAtLogin).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
                 .onChange(of: startAtLogin) { _, on in setStartAtLogin(on) }
         }
+        GroupTitle(title: "Waveform")
+        PillPreview(size: preferences.waveSize)
+            .padding(.top, 6)
+        SettingRow(title: "Size") {
+            Picker("Waveform size", selection: $preferences.waveSize) {
+                ForEach(WaveSize.allCases) { Text($0.title).tag($0) }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .controlSize(.small)
+            .fixedSize()
+        }
         GroupTitle(title: "Try it")
         TextField("Try it", text: $tryIt, prompt: Text("Click here, hold \(preferences.talkKey.title) and talk").foregroundColor(Theme.muted))
             .labelsHidden()
             .modifier(FieldStyle())
             .padding(.top, 6)
-        Text("Speech runs on this Mac. Audio is never sent anywhere or saved.")
-            .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 22)
     }
 
-    @ViewBuilder private var words: some View {
-        Heading(title: "Words", detail: "Names and terms to get right. Close matches become exactly what you add here, like Farrol becoming Farol.")
+    @ViewBuilder private var speech: some View {
+        GroupTitle(title: "Models")
+        ForEach(VoiceModel.allCases, content: modelRow)
+        if let problem = library.problem {
+            Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)
+        }
+        GroupTitle(title: "Your words")
         TextField("Add a word", text: $newWord, prompt: Text("Add a name or term, then press Return").foregroundColor(Theme.muted))
             .labelsHidden()
             .modifier(FieldStyle())
@@ -116,29 +131,10 @@ struct SettingsView: View {
             }
             .padding(.top, 10)
         }
-    }
-
-    @ViewBuilder private var models: some View {
-        Heading(title: "Models", detail: "They run on this Mac, and need no network once installed.")
-        ForEach(VoiceModel.allCases, content: modelRow)
-        if let problem = library.problem {
-            Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)
-        }
-    }
-
-    @ViewBuilder private var appearance: some View {
-        Heading(title: "Appearance", detail: "What shows at the bottom of your screen while you talk.")
-        PillPreview(size: preferences.waveSize)
-            .padding(.top, 6)
-        SettingRow(title: "Waveform size") {
-            Picker("Waveform size", selection: $preferences.waveSize) {
-                ForEach(WaveSize.allCases) { Text($0.title).tag($0) }
-            }
-            .labelsHidden()
-            .pickerStyle(.segmented)
-            .controlSize(.small)
-            .fixedSize()
-        }
+        Text("Close matches become exactly what you add, like Farrol becoming Farol.")
+            .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 10)
+        Text("Speech runs on this Mac. Audio is never sent anywhere or saved.")
+            .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 3)
     }
 
     @ViewBuilder private var about: some View {
@@ -159,7 +155,7 @@ struct SettingsView: View {
                 .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 14)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 34)
+        .padding(.top, 22)
     }
 
     // MARK: Parts
@@ -240,7 +236,7 @@ private struct PillPreview: View {
             PillView(content: isTalking ? .listening : .working, signal: signal, size: size)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 96)
+        .frame(height: 76)
         .background(RoundedRectangle(cornerRadius: 8).fill(Theme.surface))
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.line))
         .accessibilityHidden(true)

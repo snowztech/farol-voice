@@ -78,9 +78,10 @@ struct SettingRow<Control: View>: View {
     }
 }
 
-/// A sidebar item, drawn as Farol draws its own.
-struct NavItem: View {
+/// A tab at the top of Settings, with the quiet highlight Farol uses for what's selected.
+struct TabItem: View {
     let title: String
+    let symbol: String
     let selected: Bool
     let action: () -> Void
 
@@ -88,15 +89,14 @@ struct NavItem: View {
 
     var body: some View {
         Button(action: action) {
-            HStack {
-                Text(title)
-                    .font(.system(size: 13, weight: selected ? .medium : .regular))
-                    .foregroundStyle(selected ? Theme.text : Theme.muted)
-                Spacer()
+            VStack(spacing: 3) {
+                Image(systemName: symbol).font(.system(size: 15, weight: .regular)).frame(height: 18)
+                Text(title).font(.system(size: 11, weight: selected ? .medium : .regular))
             }
+            .foregroundStyle(selected || hovering ? Theme.text : Theme.muted)
+            .frame(width: 72)
             .padding(.vertical, 6)
-            .padding(.horizontal, 10)
-            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Theme.raised : hovering ? Theme.surface : .clear))
+            .background(RoundedRectangle(cornerRadius: 7).fill(selected ? Theme.raised : hovering ? Theme.surface : .clear))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
