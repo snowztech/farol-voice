@@ -12,7 +12,7 @@ enum Snapshot {
         for _ in 0..<30 { _ = signal.step() }
         NSApp.applicationIconImage = NSImage(contentsOfFile: "assets/FarolVoice.icns")
         for section in SettingsView.Section.allCases {
-            save(SettingsView(library: library, preferences: preferences, section: section), "settings-\(section.rawValue)", folder)
+            save(SettingsView(library: library, preferences: preferences, section: section, farolStatus: .needsSetting), "settings-\(section.rawValue)", folder)
         }
         save(SetupView(library: library, preferences: preferences) {}, "setup", folder)
         for size in WaveSize.allCases {

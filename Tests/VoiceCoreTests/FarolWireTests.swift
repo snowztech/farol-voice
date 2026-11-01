@@ -22,3 +22,9 @@ private func json(_ action: FarolAction) throws -> String {
     #expect(reply.sessions?.first?.target.aliases == ["main"])
     #expect(reply.error == nil)
 }
+
+@Test func readsWhatTheProbeSays() {
+    #expect(FarolStatus(probeError: "Only Farol Voice can do this.") == .notVerified)
+    #expect(FarolStatus(probeError: "Turn on Settings → Agents → Let Farol Voice control sessions in Farol.") == .needsSetting)
+    #expect(FarolStatus(probeError: "No session is called . `farol sessions` lists them.") == .ready)
+}

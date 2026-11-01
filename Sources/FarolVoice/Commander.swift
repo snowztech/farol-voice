@@ -10,8 +10,8 @@ final class Commander {
     private static let launchLimit: TimeInterval = 10
 
     /// A dev build talks to Farol Dev first, so testing never touches the sessions in your installed Farol.
-    private static var isDevBuild: Bool { Bundle.main.bundleIdentifier?.hasSuffix(".debug") == true }
-    private static var appIDs: [String] { isDevBuild ? ["dev.farol.Farol.debug", "dev.farol.Farol"] : ["dev.farol.Farol"] }
+    nonisolated private static var isDevBuild: Bool { Bundle.main.bundleIdentifier?.hasSuffix(".debug") == true }
+    nonisolated private static var appIDs: [String] { isDevBuild ? ["dev.farol.Farol.debug", "dev.farol.Farol"] : ["dev.farol.Farol"] }
 
     private let pill: Pill
     private var pendingSend: Task<Void, Never>?
@@ -196,7 +196,31 @@ final class Commander {
         return nil
     }
 
-    private static func socketPath(of id: String) -> String {
+    /// Works out whether commands would work now. Blocks on the socket, so it's never called on the main thread.
+    nonisolated static func status() -> FarolStatus {
+        guard let id = appIDs.first(where: { FarolSocket.isRunning(at: socketPath(of: $0)) }) else {
+            return appIDs.contains { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil } ? .closed : .notInstalled
+        }
+        do {
+            return FarolStatus(probeError: try FarolSocket.send(FarolStatus.probe, to: socketPath(of: id)).error)
+        } catch FarolSocket.Failure.tooOld {
+            return .tooOld
+        } catch {
+            return .unreachable
+        }
+    }
+
+    nonisolated static func openFarol() {
+        let id = appIDs.first { FarolSocket.isRunning(at: socketPath(of: $0)) }
+            ?? appIDs.first { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }
+        guard let id, let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else {
+            if let site = URL(string: "https://farol.sh") { NSWorkspace.shared.open(site) }
+            return
+        }
+        NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    nonisolated private static func socketPath(of id: String) -> String {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Farol/\(id).sock").path
     }

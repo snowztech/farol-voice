@@ -46,3 +46,22 @@ public struct FarolReply: Decodable, Equatable, Sendable {
     public let session: FarolSession?
     public let error: String?
 }
+
+/// Whether commands will work, so Settings can say so before you've tried one.
+public enum FarolStatus: Equatable, Sendable {
+    case ready, closed, notInstalled, tooOld, needsSetting, notVerified, unreachable
+
+    /// A request that can't change anything: it's refused for its text, after the checks this wants to know about.
+    public static let probe = FarolAction.type(session: "", text: "\n", submit: false, asking: nil)
+
+    /// Farol answers the probe in words, checking the caller and the setting before anything else.
+    public init(probeError error: String?) {
+        if error?.contains("Only Farol Voice") == true {
+            self = .notVerified
+        } else if error?.contains("Turn on") == true {
+            self = .needsSetting
+        } else {
+            self = .ready
+        }
+    }
+}
