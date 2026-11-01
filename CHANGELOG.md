@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Settings look the same on every tab: what you can say uses the regular rows, and pickers and buttons match.
+
 ## [0.2.0] - 2026-11-01
 
 Tell Farol what to do from any app.
