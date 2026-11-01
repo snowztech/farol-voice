@@ -1,8 +1,10 @@
 # Roadmap
 
-The goal: say "hey Farol" from across the room, without touching the keyboard, and your terminal and agents do what you asked.
+The goal: a voice assistant for your terminal and agents, with dictation that works everywhere. Say "OK Farol" from anywhere, and it opens Farol if needed, runs your agents and talks back. When you just want to write, it types into any app.
 
-You turn voice on in Farol's settings and choose a model, and everything stays on your Mac. The speech engine is a helper process built from this repo, so it can never slow the terminal down. Audio, models and the conductor stay here. Farol gets the settings, the key, and small additions to its socket.
+Farol Voice is its own menu bar app, so it works whether Farol is open or not, and Farol itself carries no voice code. Everything stays on your Mac. Farol only gets small additions to its socket.
+
+Dictation is the way in, but Handy and Wispr Flow are already great at it. Running agents by voice is the reason to choose this one.
 
 ## How we'll know it's good
 
@@ -20,22 +22,46 @@ A milestone isn't done until it clears its bar on real use. These are starting n
 
 The launch test: run 5 agents for an hour, mostly without looking at the screen, with no wrong sends and no missed questions.
 
-## 1. Voice input in Farol
+## 1. Dictation everywhere
 
-In progress, on Farol's `feat/voice-input` branch. Like Handy, inside Farol: hold a key, talk, and the text lands in the session's prompt. You press Return.
+In progress, and done when it has replaced Handy for a week.
 
-- [x] `farol-voice serve`, and Farol starting, talking to and stopping it
-- [x] A Voice section in Settings: on and off, keys, installing and deleting models
-- [x] A themed indicator with a waveform from the real mic level
-- [x] A second key to tell Farol what to do, by plain rules: go to a session, message one, start a task
-- [ ] Use it for a week, and measure speed and memory against the bars above
-- [ ] Download the helper when you turn voice on, from signed and notarized releases. For now, `scripts/install-dev.sh`
-- [ ] Compare FluidAudio, which may also run on macOS 14
-- [ ] Custom words and optional cleanup, for names like Farol
+- [x] Menu bar app with a global hold-to-talk key
+- [x] A pill with a waveform from the real mic level
+- [x] Typing into any app, with the clipboard put back afterwards
+- [x] Installing, choosing and deleting models, loading with no network once installed
+- [x] Custom words for names and terms
+- [ ] Use it for a week, on real work
+- [ ] Compare it with Wispr Flow on the same speech, and add an optional cleanup pass if the gap shows
+- [ ] Signed and notarized releases
 
-## 2. Wake word
+## 2. Control Farol
 
-Paused until voice input earns daily use. "Hey Farol" becomes one more toggle in the same section.
+Done when you can switch sessions and message agents from any app, and it opens Farol if it's closed. The rules were first tried on Farol's `feat/voice-input` branch, which stays as a reference and won't be merged.
+
+- A second key to tell Farol what to do: go to a session, message one, start a task
+- Each of these first as a small PR in Farol's socket: its own permission, focus a session, a send that only goes through if the session is still waiting on the same question
+- Launch Farol and wait for its socket when it's closed
+- A shell command spoken aloud is always read back and only runs after you say yes
+
+## 3. Spoken replies
+
+Hear what agents ask, and answer them, using `farol sessions`, `read` and `send`.
+
+- Kokoro for speech. Compare it with Cartesia and ElevenLabs on real spoken summaries
+- Compare Parakeet with WhisperKit and Deepgram Flux on about 100 real commands, aiming for 95% understood
+
+## 4. Conductor
+
+A small, fast agent that hears you, works out which session you mean, and acts.
+
+- Spoken status: "what's everyone doing?"
+- Routing, with the target locked and shown before anything is sent
+- Rebuilding your request from session context, with your approval before it's sent
+
+## 5. "OK Farol"
+
+Comes after the assistant is worth waking. It becomes one more toggle in Settings. Test "OK Farol" and "hey Farol" aloud and pick one before training.
 
 - [x] `farol-voice listen` and `farol-voice score`, scoring through the same streaming path the mic uses
 - [x] Baseline on `SpeechWakeWord`, an off-the-shelf keyword spotter
@@ -56,37 +82,12 @@ openWakeWord's pretrained models are non-commercial, but its code is Apache 2.0 
 
 Calling CoreML in a long loop without an autorelease pool crashes after a few minutes of audio. Anything that listens all day has to drain one per chunk.
 
-## 3. Spoken replies
-
-Hear what agents ask, and answer them, using `farol sessions`, `read` and `send`.
-
-- Kokoro for speech. Compare it with Cartesia and ElevenLabs on real spoken summaries
-- Compare Parakeet with WhisperKit and Deepgram Flux on about 100 real commands, aiming for 95% understood
-
-## 4. Natural talking
+## 6. Natural talking
 
 - Smart Turn v3 with Silero VAD, so a thinking pause doesn't end your turn
 - Echo cancelling, so Farol never wakes itself
 - Instant interruption
 - Live text, then a final pass, then correction against session, branch and file names
-
-## 5. Conductor
-
-A small, fast agent that hears you, works out which session you mean, and acts.
-
-- Spoken status: "what's everyone doing?"
-- Routing, with the target locked and shown before anything is sent
-- Rebuilding your request from session context, with your approval before it's sent
-
-## 6. Control the terminal
-
-Farol needs these on its socket first. Each is a small PR in Farol, ahead of the work here.
-
-- Its own permission, separate from letting agents message each other
-- Live session events, instead of polling
-- A send that only goes through if the session is still waiting on the same question
-- Focus a session, open a panel, run a command
-- A shell command spoken aloud is always read back and only runs after you say yes
 
 ## 7. Public beta
 
