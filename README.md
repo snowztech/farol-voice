@@ -27,18 +27,22 @@ It's the first step toward a voice assistant for your terminal and coding agents
 
 ## Install
 
-There's no download yet, so build it from source. You need macOS 15 or later on Apple Silicon, and Xcode 26.
+[Download Farol Voice](https://github.com/snowztech/farol-voice/releases/latest/download/FarolVoice.dmg), and drag it to Applications. It needs macOS 15 or later on Apple Silicon, and it updates itself.
+
+The setup window walks you through the rest: allow the microphone and Accessibility, install a model, and try it. After that it lives in your menu bar, under the sound bars.
+
+Hold **Fn** to talk, or choose Right Option or another right-side key in Settings. If Fn opens the emoji picker, change what it does in System Settings, Keyboard.
+
+Models are in `~/Library/Application Support/Farol Voice/models`.
+
+### Build it yourself
+
+You need Xcode 26.
 
 ```sh
 git clone https://github.com/snowztech/farol-voice && cd farol-voice
 make run
 ```
-
-The setup window walks you through the rest: allow the microphone and Accessibility, install a model, and try it. After that it lives in your menu bar, under the sound bars.
-
-Hold **Fn** to talk, or choose Right Option in Settings. If Fn opens the emoji picker, change what it does in System Settings, Keyboard.
-
-Models are in `~/Library/Application Support/Farol Voice/models`.
 
 ## Why Accessibility?
 
