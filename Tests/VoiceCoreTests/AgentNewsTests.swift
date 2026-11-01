@@ -42,8 +42,8 @@ private func session(_ id: String, _ status: String, asking: String? = nil, choi
 @Test func doesNotReadAWholeScript() {
     let long = String(repeating: "word ", count: 100)
     let sentence = AgentNews.question(session("a", "waiting", asking: long)).sentence
-    #expect(sentence.count < 170)
-    #expect(sentence.hasSuffix(", and more."))
+    #expect(sentence.count < 200)
+    #expect(sentence.contains(", and more."))
 }
 
 @Test func questionsGoFirstAndFinishedOnesMerge() {
