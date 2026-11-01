@@ -64,44 +64,64 @@
     .actions a.sn-btn--secondary:hover { color: var(--sn-fg); }
     .fine { color: var(--sn-fg-subtle); font-size: var(--sn-text-xs); margin: 14px 0 0; }
 
-    /* The real thing in small: the words appear while the pill listens, then it thinks, like the app. */
+    /* A small app window running the real sequence: hold the key, talk, let go, and the words land. */
     .demo {
-      position: relative; margin: 44px auto 0; max-width: 620px;
+      position: relative; margin: 44px auto 0; max-width: 620px; height: 236px; overflow: hidden; text-align: left;
       border: 1px solid var(--sn-border-strong); border-radius: 12px; background: #0d1018; color: #dfe3ec;
-      height: 210px; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
     }
     .demo::before {
       content: ""; position: absolute; inset: -30% 15% auto; height: 80%;
-      background: radial-gradient(ellipse at center, rgba(113, 173, 255, 0.14), transparent 70%);
+      background: radial-gradient(ellipse at center, rgba(113, 173, 255, 0.13), transparent 70%);
       filter: blur(24px); pointer-events: none;
     }
-    .demo .words {
-      position: absolute; left: 24px; right: 24px; top: 28px; margin: 0; text-align: left;
-      font-size: var(--sn-text-sm); white-space: nowrap; overflow: hidden;
-      width: 0; animation: words 7s infinite;
+    .demo-bar { position: relative; display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-bottom: 1px solid #1f232c; }
+    .demo-bar i { width: 9px; height: 9px; border-radius: 50%; background: #2e3340; }
+    .demo-app { margin-left: 8px; color: #8e929b; font-size: var(--sn-text-xs); }
+    .demo-body { position: relative; padding: 18px 20px; font-size: var(--sn-text-sm); line-height: 1.55; transition: opacity 180ms ease; }
+    .demo-hint { color: #5d626e; }
+    .demo-field { margin-top: 6px; }
+    .demo-prompt { color: #71adff; margin-right: 8px; }
+    /* Takes no room until it lands, so the cursor waits where the words will start. They arrive at once, as a paste does. */
+    .demo-text { display: none; }
+    .demo-text.on { display: inline; animation: land 140ms ease-out; }
+    @keyframes land { from { opacity: 0; } to { opacity: 1; } }
+    .demo-caret { display: inline-block; width: 2px; height: 1.05em; margin-left: 1px; vertical-align: -2px; background: #71adff; animation: caret 1.1s steps(2, jump-none) infinite; }
+    @keyframes caret { from { opacity: 1; } to { opacity: 0; } }
+
+    .demo-key {
+      position: absolute; left: 18px; bottom: 18px; display: flex; align-items: center; justify-content: center;
+      width: 34px; height: 30px; border-radius: 6px; font-size: 11px; color: #8e929b;
+      background: #171b24; border: 1px solid #2e3340; box-shadow: 0 2px 0 #2e3340;
+      transition: transform 90ms ease-out, box-shadow 90ms ease-out, color 90ms ease-out, border-color 90ms ease-out;
     }
-    .demo .words::after { content: ""; display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -2px; background: #71adff; }
-    @keyframes words { 0%, 58% { width: 0; } 59%, 92% { width: 92%; } 100% { width: 0; } }
+    .demo-key.down { transform: translateY(2px); box-shadow: 0 0 0 #2e3340; color: #dfe3ec; border-color: #71adff; }
+
     .pill {
-      position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
-      display: flex; align-items: center; gap: 2.5px; height: 30px; padding: 0 14px; border-radius: 15px;
-      background: #0d1018; border: 1px solid #2e3037; animation: pill 7s infinite;
+      position: absolute; left: 50%; bottom: 18px; display: flex; align-items: center; gap: 2.5px;
+      height: 30px; padding: 0 14px; border-radius: 15px; background: #0d1018; border: 1px solid #2e3037;
+      opacity: 0; transform: translate(-50%, 4px); transition: opacity 120ms ease-out, transform 120ms ease-out;
     }
-    @keyframes pill { 0%, 2% { opacity: 0; } 5%, 56% { opacity: 1; } 59%, 100% { opacity: 0; } }
-    .pill i { display: block; width: 2.5px; height: 16px; border-radius: 2px; background: #dfe3ec; transform-origin: center; animation: voice 0.9s ease-in-out infinite alternate; }
-    .pill i:nth-child(1) { animation-delay: -0.1s; --top: 0.45; }
-    .pill i:nth-child(2) { animation-delay: -0.5s; --top: 0.7; }
-    .pill i:nth-child(3) { animation-delay: -0.25s; --top: 0.9; }
-    .pill i:nth-child(4) { animation-delay: -0.7s; --top: 1; }
-    .pill i:nth-child(5) { animation-delay: -0.35s; --top: 0.9; }
-    .pill i:nth-child(6) { animation-delay: -0.6s; --top: 0.7; }
-    .pill i:nth-child(7) { animation-delay: -0.15s; --top: 0.45; }
-    @keyframes voice { from { transform: scaleY(0.2); } to { transform: scaleY(var(--top)); } }
-    @media (prefers-reduced-motion: reduce) {
-      .demo .words { animation: none; width: 92%; }
-      .pill, .pill i { animation: none; }
-      .pill i { transform: scaleY(var(--top)); }
-    }
+    .pill.on { opacity: 1; transform: translate(-50%, 0); }
+    .pill i { display: block; width: 2.5px; height: 16px; border-radius: 2px; background: #dfe3ec; transform: scaleY(0.19); }
+    .pill.talking i { animation: voice 0.62s ease-in-out infinite alternate; }
+    .pill.talking i:nth-child(1) { animation-delay: -0.1s; --top: 0.45; }
+    .pill.talking i:nth-child(2) { animation-delay: -0.42s; --top: 0.7; }
+    .pill.talking i:nth-child(3) { animation-delay: -0.23s; --top: 0.9; }
+    .pill.talking i:nth-child(4) { animation-delay: -0.55s; --top: 1; }
+    .pill.talking i:nth-child(5) { animation-delay: -0.31s; --top: 0.85; }
+    .pill.talking i:nth-child(6) { animation-delay: -0.5s; --top: 0.65; }
+    .pill.talking i:nth-child(7) { animation-delay: -0.15s; --top: 0.4; }
+    @keyframes voice { from { transform: scaleY(0.25); } to { transform: scaleY(var(--top)); } }
+    /* Farol means lighthouse: while it thinks, a soft beam passes across the bars. */
+    .pill.thinking i { background: #71adff; opacity: 0.22; transform: scaleY(0.4); animation: beam 0.8s linear infinite; }
+    .pill.thinking i:nth-child(2) { animation-delay: 0.08s; }
+    .pill.thinking i:nth-child(3) { animation-delay: 0.16s; }
+    .pill.thinking i:nth-child(4) { animation-delay: 0.24s; }
+    .pill.thinking i:nth-child(5) { animation-delay: 0.32s; }
+    .pill.thinking i:nth-child(6) { animation-delay: 0.4s; }
+    .pill.thinking i:nth-child(7) { animation-delay: 0.48s; }
+    @keyframes beam { 0%, 100% { opacity: 0.22; } 25% { opacity: 1; } 50% { opacity: 0.22; } }
 
     .features { list-style: none; margin: 88px auto 0; display: grid; gap: 28px; }
     @media (min-width: 760px) { .features { grid-template-columns: repeat(2, 1fr); } }
@@ -145,9 +165,14 @@
       </div>
       <p class="fine">Apple silicon, macOS 15+. Free and open source.</p>
 
-      <div class="demo" role="img" aria-label="An animation of the Farol Voice waveform while someone talks, followed by their words appearing as text.">
-        <p class="words">Let's ship the release on Friday.</p>
-        <div class="pill" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="demo" role="img" aria-label="An example in a small app window. Someone holds the Fn key and talks, a waveform shows while they speak, and when they let go their words appear at the cursor.">
+        <div class="demo-bar" aria-hidden="true"><i></i><i></i><i></i><span class="demo-app" id="demo-app">Terminal</span></div>
+        <div class="demo-body" id="demo-body" aria-hidden="true">
+          <div class="demo-hint" id="demo-hint">Coding agent, waiting for you</div>
+          <div class="demo-field"><span class="demo-prompt" id="demo-prompt">&gt;</span><span class="demo-text on" id="demo-text">Add a retry to the upload worker and run the tests.</span><span class="demo-caret"></span></div>
+        </div>
+        <div class="demo-key" id="demo-key" aria-hidden="true">fn</div>
+        <div class="pill" id="demo-pill" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </div>
     </section>
 
@@ -208,5 +233,57 @@
       <a href="https://github.com/snowztech/farol-voice/blob/main/LICENSE">MIT</a>
     </nav>
   </footer>
+  <script>
+    // The same order of events as the app, one app window after another, to show it works wherever you type.
+    (function () {
+      var scenes = [
+        { app: "Terminal", hint: "Coding agent, waiting for you", prompt: ">", text: "Add a retry to the upload worker and run the tests." },
+        { app: "Team chat", hint: "#launch", prompt: "", text: "Let's ship the release on Friday." },
+        { app: "Mail", hint: "To: Ana", prompt: "", text: "Thanks for the intro. Tuesday afternoon works for me." }
+      ];
+      var app = document.getElementById("demo-app"), hint = document.getElementById("demo-hint"),
+          prompt = document.getElementById("demo-prompt"), text = document.getElementById("demo-text"),
+          body = document.getElementById("demo-body"), key = document.getElementById("demo-key"),
+          pill = document.getElementById("demo-pill");
+
+      function open(scene) {
+        app.textContent = scene.app;
+        hint.textContent = scene.hint;
+        prompt.textContent = scene.prompt;
+        prompt.style.display = scene.prompt ? "" : "none";
+        text.textContent = scene.text;
+        text.classList.remove("on");
+        body.style.opacity = 1;
+      }
+
+      function show(index, phase) {
+        open(scenes[index]);
+        key.classList.toggle("down", phase === "talking");
+        pill.classList.toggle("on", phase === "talking" || phase === "thinking");
+        pill.classList.toggle("talking", phase === "talking");
+        pill.classList.toggle("thinking", phase === "thinking");
+        text.classList.toggle("on", phase === "done");
+      }
+
+      // Stays on the first scene's finished state, as the page loads, for anyone who prefers no motion.
+      function run() {
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        var index = 0;
+        var steps = [["idle", 900], ["talking", 2200], ["thinking", 800], ["done", 2600]];
+        function play(step) {
+          if (step === steps.length) {
+            body.style.opacity = 0;
+            index = (index + 1) % scenes.length;
+            setTimeout(function () { play(0); }, 200);
+            return;
+          }
+          show(index, steps[step][0]);
+          setTimeout(function () { play(step + 1); }, steps[step][1]);
+        }
+        play(0);
+      }
+      run();
+    })();
+  </script>
 </body>
 </html>
