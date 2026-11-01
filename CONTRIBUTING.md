@@ -20,6 +20,7 @@ make test
 
 - Branch from `main`. One change per PR.
 - Commits are one line in the Conventional Commits style: `fix(typer): keep the clipboard when pasting fails`.
+- If users would notice the change, add a line under **Unreleased** in `CHANGELOG.md`.
 - For UI changes, add a screenshot. A debug build renders the screens with `.build/debug/FarolVoice --snapshot <folder>`.
 
 ## Where things live

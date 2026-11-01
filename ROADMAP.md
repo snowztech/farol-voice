@@ -44,7 +44,7 @@ The first version anyone can download, before it controls Farol. It only claims 
 - [ ] A full license check of everything the app includes
 - [ ] A demo GIF in the README
 - [ ] Make this repo public
-- [ ] A one-page site at `voice.farol.sh`
+- [ ] A one-page site at `voice.farol.sh`, linked from About
 
 **Next, and the reason this app exists: step 3.** Don't stop at dictation.
 

@@ -146,6 +146,8 @@ struct SettingsView: View {
             HStack(spacing: 14) {
                 Link("Farol", destination: URL(string: "https://farol.sh")!)
                 Link("GitHub", destination: URL(string: "https://github.com/snowztech/farol-voice")!)
+                Link("Changelog", destination: URL(string: "https://github.com/snowztech/farol-voice/blob/main/CHANGELOG.md")!)
+                Link("Credits", destination: URL(string: "https://github.com/snowztech/farol-voice/blob/main/THIRD_PARTY_NOTICES")!)
             }
             .font(.system(size: 12.5))
             .foregroundStyle(Theme.text)
@@ -202,9 +204,9 @@ struct SettingsView: View {
     private func detail(of model: VoiceModel) -> String {
         if library.installing == model { return library.installStatus }
         if library.installed.contains(model), let size = library.sizes[model], size > 0 {
-            return "\(model.strengths) \(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)) on this Mac. \(model.credit)"
+            return "\(model.strengths) \(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)) on this Mac."
         }
-        return "\(model.strengths) \(model.downloadSize) \(model.credit)"
+        return "\(model.strengths) \(model.downloadSize)"
     }
 
     private func setStartAtLogin(_ on: Bool) {
