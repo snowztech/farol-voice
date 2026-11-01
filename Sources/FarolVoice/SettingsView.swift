@@ -135,22 +135,22 @@ struct SettingsView: View {
                 ForEach(WaveSize.allCases) { Text($0.title).tag($0) }
             }
             .labelsHidden()
-            .pickerStyle(.segmented)
             .controlSize(.small)
             .fixedSize()
         }
     }
 
     @ViewBuilder private var dictation: some View {
-        GroupTitle(title: "Type with your voice, in any app")
+        GroupTitle(title: "Type in any app")
         SettingRow(title: "Hold to talk",
                    detail: preferences.talkKey == .fn ? "If Fn opens the emoji picker, change it in System Settings, Keyboard." : nil) {
             TalkKeyPicker(preferences: preferences)
         }
+        GroupTitle(title: "Try it")
         TextField("Try it", text: $tryIt, prompt: Text("Click here, hold \(preferences.talkKey.title) and talk").foregroundColor(Theme.muted))
             .labelsHidden()
             .modifier(FieldStyle())
-            .padding(.top, 12)
+            .padding(.top, 6)
         GroupTitle(title: "Your words")
         TextField("Add a word", text: $newWord, prompt: Text("Add a name or term, then press Return").foregroundColor(Theme.muted))
             .labelsHidden()
@@ -171,7 +171,7 @@ struct SettingsView: View {
     }
 
     @ViewBuilder private var farol: some View {
-        GroupTitle(title: "Control Farol and your agents")
+        GroupTitle(title: "Control your agents")
         farolStatusRow
         SettingRow(title: "Hold to tell Farol") {
             Picker("Hold to tell Farol", selection: $preferences.commandKey) {
@@ -182,31 +182,23 @@ struct SettingsView: View {
             .fixedSize()
         }
         GroupTitle(title: "What you can say")
-        VStack(alignment: .leading, spacing: 0) {
-            sayRow("Open Farol", "From any app, even if it's closed")
-            sayRow("Go to auth", "Switch to a session, by name or branch")
-            sayRow("Tell auth to run the tests", "Types it there. You press Return")
-            sayRow("...and send it", "Sends after a moment. Press any key to stop")
-            sayRow("New task, add a search box", "Starts an agent in its own worktree")
-        }
+        sayRow("Open Farol", "From any app, even if it's closed.")
+        sayRow("Go to auth", "Switches to a session, by name or branch.")
+        sayRow("Tell auth to run the tests", "Types it there, and you press Return. Add \"and send it\" to send it after a moment.")
+        sayRow("New task, add a search box", "Starts an agent in its own worktree.")
         Text("It reads session names and status, never your conversations.")
             .font(.system(size: 11.5)).foregroundStyle(Theme.muted).padding(.top, 10)
     }
 
     private func sayRow(_ phrase: String, _ meaning: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 16) {
-            Text(phrase).font(.system(size: 12.5, design: .monospaced)).frame(width: 216, alignment: .leading)
-            Text(meaning).font(.system(size: 11.5)).foregroundStyle(Theme.muted)
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, 6)
+        SettingRow(title: phrase, detail: meaning) { EmptyView() }
     }
 
     private var farolStatusRow: some View {
         let (title, detail, action) = describe(farolStatus)
         return SettingRow(title: title, detail: detail) {
             if farolStatus == .ready {
-                Circle().fill(Theme.beam).frame(width: 7, height: 7).padding(.horizontal, 9).accessibilityLabel("Connected")
+                Circle().fill(Theme.beam).frame(width: 5, height: 5).padding(.horizontal, 9).accessibilityLabel("Connected")
             } else if let action {
                 QuietButton(title: action, prominent: true, action: Commander.openFarol)
             }
@@ -301,13 +293,13 @@ struct SettingsView: View {
                 if library.installing == model {
                     QuietButton(title: "Cancel", action: library.cancelInstall)
                 } else if library.installed.contains(model) {
-                    QuietButton(title: "Delete") { modelToDelete = model }
                     if library.chosen == model {
                         Label("In use", systemImage: "circle.fill")
                             .labelStyle(InUseLabelStyle())
                     } else {
                         QuietButton(title: "Use", prominent: true) { library.use(model) }
                     }
+                    QuietButton(title: "Delete") { modelToDelete = model }
                 } else {
                     QuietButton(title: "Install", prominent: true) { library.install(model) }.disabled(library.installing != nil)
                 }
