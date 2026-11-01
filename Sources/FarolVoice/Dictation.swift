@@ -155,11 +155,12 @@ final class Dictation {
         let model = library.chosen
         let app = targetApp
         let isCommand = heldIsCommand
+        let language = model.lockedLanguage(preferences.language)
         Task { [engine = library.engine, weak self] in
             do {
                 // Usually loaded already, unless it was unloaded after a long break.
                 try await engine.load(model, online: false) { _, _ in }
-                let text = try await engine.transcribe(samples)
+                let text = try await engine.transcribe(samples, language: language)
                 await MainActor.run { self?.deliver(text, to: app, isCommand: isCommand) }
             } catch {
                 await MainActor.run { self?.failed(error) }

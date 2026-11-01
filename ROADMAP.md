@@ -34,7 +34,8 @@ In progress, and done when it has replaced other dictation apps for a week of re
 - [ ] Compare accuracy with paid tools on the same speech, and add an optional cleanup pass if the gap shows
 - [x] A choice of Fn or any right-side modifier key
 - [ ] Record any shortcut, and tap to start and stop
-- [ ] Rethink how you choose a model, in plain terms like fast or more languages rather than model names
+- [x] Choose your language, and it recommends the model
+- [ ] Try an English-only model, since Parakeet V3 can't be held to one language and sometimes writes words in others
 
 ## 2. First release
 

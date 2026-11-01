@@ -59,4 +59,43 @@ final class VoiceCoreTests: XCTestCase {
     func testRecommendsWhisperOtherwise() {
         XCTAssertEqual(VoiceModel.recommended(languages: ["ja-JP", "en"]), .whisperTurbo)
     }
+
+    func testChoosesTheModelFromTheLanguage() {
+        XCTAssertEqual(VoiceModel.best(for: "en"), .parakeetV3)
+        XCTAssertEqual(VoiceModel.best(for: "pt"), .parakeetV3)
+        XCTAssertEqual(VoiceModel.best(for: "ja"), .whisperTurbo)
+        XCTAssertEqual(VoiceModel.best(for: nil), .parakeetV3)
+    }
+
+    func testOnlyWhisperIsHeldToALanguage() {
+        XCTAssertEqual(VoiceModel.whisperTurbo.lockedLanguage("ja"), "ja")
+        XCTAssertNil(VoiceModel.whisperTurbo.lockedLanguage(nil))
+        XCTAssertNil(VoiceModel.parakeetV3.lockedLanguage("en"))
+    }
+
+    func testStartsFromTheMacsLanguage() {
+        XCTAssertEqual(SpeechLanguage.initial(preferred: ["pt-PT", "en"]), "pt")
+        XCTAssertEqual(SpeechLanguage.initial(preferred: ["ja_JP"]), "ja")
+        XCTAssertEqual(SpeechLanguage.initial(preferred: ["tlh"]), SpeechLanguage.automatic)
+        XCTAssertEqual(SpeechLanguage.initial(preferred: []), SpeechLanguage.automatic)
+    }
+
+    func testPutsYourLanguagesFirst() {
+        XCTAssertEqual(SpeechLanguage.yours(preferred: ["pt-PT", "en-GB", "pt-BR", "tlh"]), ["pt", "en"])
+    }
+
+    func testOffersEveryLanguageEitherModelKnows() {
+        XCTAssertEqual(SpeechLanguage.codes.count, Set(SpeechLanguage.codes).count)
+        for code in ["bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "hr", "hu", "it", "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk"] {
+            XCTAssertTrue(SpeechLanguage.codes.contains(code), code)
+            XCTAssertEqual(VoiceModel.best(for: code), .parakeetV3, code)
+        }
+    }
+
+    func testEveryLanguageOnOfferCanBeChosenFromTheList() {
+        XCTAssertTrue(SpeechLanguage.codes.contains("en"))
+        XCTAssertTrue(SpeechLanguage.codes.contains("ja"))
+        XCTAssertNil(SpeechLanguage.language(from: SpeechLanguage.automatic))
+        XCTAssertEqual(SpeechLanguage.language(from: "fr"), "fr")
+    }
 }
