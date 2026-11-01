@@ -30,7 +30,8 @@ In progress, and done when it has replaced other dictation apps for a week of re
 - [x] First-time setup
 - [ ] A week of daily use
 - [ ] Compare accuracy with paid tools on the same speech, and add an optional cleanup pass if the gap shows
-- [ ] Choose any key, and tap to start and stop
+- [x] A choice of Fn or any right-side modifier key
+- [ ] Record any shortcut, and tap to start and stop
 - [ ] Rethink how you choose a model, in plain terms like fast or more languages rather than model names
 
 ## 2. First release

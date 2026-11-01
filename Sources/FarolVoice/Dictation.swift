@@ -80,7 +80,7 @@ final class Dictation {
         }
         let key = preferences.talkKey
         guard event.keyCode == key.keyCode else { return }
-        let down = event.modifierFlags.contains(key.flag)
+        let down = key.isDown(in: event)
         guard down != heldKey else { return }
         heldKey = down
         if down {
