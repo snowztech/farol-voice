@@ -87,6 +87,15 @@ struct SettingsView: View {
                    detail: preferences.talkKey == .fn ? "If Fn opens the emoji picker, change it in System Settings, Keyboard." : nil) {
             TalkKeyPicker(preferences: preferences)
         }
+        SettingRow(title: "Hold to tell Farol",
+                   detail: "Say \"go to auth\", \"tell auth to run the tests\", add \"and send it\" to send, or \"new task, add a search box\". Needs a setting in Farol: Settings, Agents, Let Farol Voice control sessions.") {
+            Picker("Hold to tell Farol", selection: $preferences.commandKey) {
+                ForEach(TalkKey.allCases) { Text($0.title).tag($0) }
+            }
+            .labelsHidden()
+            .controlSize(.small)
+            .fixedSize()
+        }
         SettingRow(title: "Start at login", detail: loginProblem) {
             Toggle("", isOn: $startAtLogin).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
                 .onChange(of: startAtLogin) { _, on in setStartAtLogin(on) }
@@ -236,7 +245,7 @@ private struct PillPreview: View {
             let moment = time.truncatingRemainder(dividingBy: Self.talking + Self.thinking)
             let isTalking = reduceMotion || moment < Self.talking
             let _ = signal.target = reduceMotion ? 0.7 : Self.voice(at: time)
-            PillView(content: isTalking ? .listening : .working, signal: signal, size: size)
+            PillView(content: isTalking ? .listening(command: false) : .working, signal: signal, size: size)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 76)

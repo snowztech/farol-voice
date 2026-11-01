@@ -3,7 +3,7 @@ import AVFoundation
 import VoiceCore
 import VoiceEngine
 
-/// Hold the key, talk, let go, and the words appear wherever you were typing.
+/// Hold one key, talk, let go, and the words appear wherever you were typing. Hold the other, and you're telling Farol what to do.
 final class Dictation {
     /// Long enough that Right Option held for a typed accent never opens the mic.
     private static let holdDelay: TimeInterval = 0.15
@@ -21,8 +21,10 @@ final class Dictation {
     private let preferences: Preferences
     private let openSettings: () -> Void
     private let pill: Pill
+    private let commander: Commander
     private var monitors: [Any] = []
-    private var heldKey = false
+    private var heldKey: TalkKey?
+    private var heldIsCommand = false
     private var pendingStart: DispatchWorkItem?
     private var recording: Recording?
     private var targetApp: pid_t?
@@ -35,6 +37,7 @@ final class Dictation {
         self.preferences = preferences
         self.openSettings = openSettings
         pill = Pill(preferences: preferences)
+        commander = MainActor.assumeIsolated { [pill] in Commander(pill: pill) }
     }
 
     func begin() {
@@ -74,26 +77,29 @@ final class Dictation {
 
     private func handle(_ event: NSEvent) {
         if event.type == .keyDown {
-            // A key while this one is held is a shortcut or a typed character, not someone talking.
-            if heldKey { cancel() }
+            // A key while one is held is a shortcut or a typed character, not someone talking.
+            if heldKey != nil { cancel() }
+            Task { @MainActor [commander] in commander.stopPendingSend() }
             return
         }
-        let key = preferences.talkKey
-        guard event.keyCode == key.keyCode else { return }
+        let keys = [preferences.talkKey, preferences.commandKey]
+        guard let key = keys.first(where: { $0.keyCode == event.keyCode }) else { return }
         let down = key.isDown(in: event)
-        guard down != heldKey else { return }
-        heldKey = down
-        if down {
+        if down, heldKey == nil {
+            heldKey = key
+            heldIsCommand = key == preferences.commandKey
             let start = DispatchWorkItem { [weak self] in self?.start() }
             pendingStart = start
             DispatchQueue.main.asyncAfter(deadline: .now() + Self.holdDelay, execute: start)
-        } else {
+        } else if !down, heldKey == key {
+            heldKey = nil
             stop()
         }
     }
 
     private func start() {
         pendingStart = nil
+        Task { @MainActor [commander] in commander.stopPendingSend() }
         guard library.isReady else {
             pill.flash("Install a model first")
             openSettings()
@@ -123,12 +129,12 @@ final class Dictation {
         targetApp = NSWorkspace.shared.frontmostApplication?.processIdentifier
         idle?.cancel()
         let later = DispatchWorkItem { [weak self] in
-            self?.heldKey = false
+            self?.heldKey = nil
             self?.stop()
         }
         limit = later
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.longestHold, execute: later)
-        pill.showListening()
+        pill.showListening(command: heldIsCommand)
         onListeningChange?(true)
     }
 
@@ -148,12 +154,13 @@ final class Dictation {
         pill.showWorking()
         let model = library.chosen
         let app = targetApp
+        let isCommand = heldIsCommand
         Task { [engine = library.engine, weak self] in
             do {
                 // Usually loaded already, unless it was unloaded after a long break.
                 try await engine.load(model, online: false) { _, _ in }
                 let text = try await engine.transcribe(samples)
-                await MainActor.run { self?.deliver(text, to: app) }
+                await MainActor.run { self?.deliver(text, to: app, isCommand: isCommand) }
             } catch {
                 await MainActor.run { self?.failed(error) }
             }
@@ -162,7 +169,7 @@ final class Dictation {
 
     /// Drops what was said so far. Nothing is typed.
     private func cancel() {
-        heldKey = false
+        heldKey = nil
         pendingStart?.cancel()
         pendingStart = nil
         limit?.cancel()
@@ -173,8 +180,14 @@ final class Dictation {
         finish()
     }
 
-    private func deliver(_ transcript: String, to app: pid_t?) {
+    private func deliver(_ transcript: String, to app: pid_t?, isCommand: Bool) {
         working -= 1
+        if isCommand {
+            lastTranscript = transcript
+            scheduleUnload()
+            Task { @MainActor [commander] in await commander.run(transcript) }
+            return
+        }
         let text = DictationText.clean(transcript, customWords: preferences.words)
         guard !text.isEmpty else {
             pill.flash("Didn't catch that")

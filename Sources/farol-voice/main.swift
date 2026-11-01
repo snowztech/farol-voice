@@ -5,8 +5,10 @@ import VoiceEngine
 
 let usage = """
 usage: farol-voice transcribe <file.wav>... [--model parakeet-v3|whisper-turbo] [--words "Farol, snowztech"]
+       farol-voice understand <socket> <what you'd say>
 
 Files are 16 kHz mono WAV. Use this to compare models on the same recordings.
+understand shows how a sentence is read against Farol's real sessions, without doing anything.
 """
 
 func fail(_ message: String) -> Never {
@@ -57,10 +59,19 @@ func transcribe(_ arguments: [String]) async throws {
     }
 }
 
+func understand(_ arguments: [String]) throws {
+    guard arguments.count >= 2 else { fail(usage) }
+    let sessions = try FarolSocket.send(.sessions, to: arguments[0]).sessions ?? []
+    print(VoiceCommand.parse(arguments.dropFirst().joined(separator: " "), sessions: sessions.map(\.target)))
+}
+
 let arguments = Array(CommandLine.arguments.dropFirst())
 do {
-    guard arguments.first == "transcribe" else { fail(usage) }
-    try await transcribe(Array(arguments.dropFirst()))
+    switch arguments.first {
+    case "transcribe": try await transcribe(Array(arguments.dropFirst()))
+    case "understand": try understand(Array(arguments.dropFirst()))
+    default: fail(usage)
+    }
 } catch {
     fail("\(error)")
 }

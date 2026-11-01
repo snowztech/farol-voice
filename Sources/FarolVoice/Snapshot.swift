@@ -16,7 +16,8 @@ enum Snapshot {
         }
         save(SetupView(library: library, preferences: preferences) {}, "setup", folder)
         for size in WaveSize.allCases {
-            save(PillView(content: .listening, signal: signal, size: size), "pill-listening-\(size.rawValue)", folder)
+            save(PillView(content: .listening(command: false), signal: signal, size: size), "pill-listening-\(size.rawValue)", folder)
+            save(PillView(content: .listening(command: true), signal: signal, size: size), "pill-command-\(size.rawValue)", folder)
             save(PillView(content: .working, signal: signal, size: size), "pill-working-\(size.rawValue)", folder)
         }
         save(PillView(content: .message("Copied to the clipboard"), signal: signal), "pill-message", folder)
