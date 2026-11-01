@@ -38,36 +38,15 @@ final class MenuBar: NSObject, NSMenuDelegate {
         openSettings()
     }
 
-    /// Farol's lighthouse. Its beams light up while the mic is open.
+    /// Sound bars, which grow while the mic is open. Not Farol's lighthouse, so the two apps can sit side by side.
     private static func icon(lit: Bool) -> NSImage {
+        let heights: [CGFloat] = lit ? [7, 12, 16, 12, 7] : [4, 8, 12, 8, 4]
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
             NSColor.black.setFill()
-            let tower = NSBezierPath()
-            tower.move(to: NSPoint(x: 6, y: 2.5))
-            tower.line(to: NSPoint(x: 12, y: 2.5))
-            tower.line(to: NSPoint(x: 10.6, y: 10.5))
-            tower.line(to: NSPoint(x: 7.4, y: 10.5))
-            tower.close()
-            tower.fill()
-            NSBezierPath(rect: NSRect(x: 4.5, y: 1.2, width: 9, height: 1.3)).fill()
-            NSBezierPath(rect: NSRect(x: 7.6, y: 11.3, width: 2.8, height: 2.4)).fill()
-            let roof = NSBezierPath()
-            roof.move(to: NSPoint(x: 7.1, y: 14.3))
-            roof.line(to: NSPoint(x: 10.9, y: 14.3))
-            roof.line(to: NSPoint(x: 9, y: 16.4))
-            roof.close()
-            roof.fill()
-            guard lit else { return true }
-            NSColor.black.setStroke()
-            for side in [CGFloat(-1), 1] {
-                let beam = NSBezierPath()
-                beam.lineWidth = 1.6
-                beam.lineCapStyle = .round
-                beam.lineJoinStyle = .round
-                beam.move(to: NSPoint(x: 9 + side * 6.8, y: 14.6))
-                beam.line(to: NSPoint(x: 9 + side * 3.6, y: 12.5))
-                beam.line(to: NSPoint(x: 9 + side * 6.8, y: 10.4))
-                beam.stroke()
+            for (index, height) in heights.enumerated() {
+                let x = 2.5 + CGFloat(index) * 2.8
+                let bar = NSRect(x: x, y: (18 - height) / 2, width: 1.8, height: height)
+                NSBezierPath(roundedRect: bar, xRadius: 0.9, yRadius: 0.9).fill()
             }
             return true
         }
