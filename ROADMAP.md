@@ -33,9 +33,21 @@ In progress, and done when it has replaced Handy for a week.
 - [x] Custom words for names and terms
 - [ ] Use it for a week, on real work
 - [ ] Compare it with Wispr Flow on the same speech, and add an optional cleanup pass if the gap shows
-- [ ] Signed and notarized releases
 
-## 2. Control Farol
+## 2. First release: dictation
+
+The first version people can use, before it controls Farol. Publish it once it has passed the week above. The page says agent control is coming, so this doesn't read as one more dictation app.
+
+- [ ] Its own app icon, instead of Farol's
+- [ ] Signed and notarized DMG, adapted from Farol's `scripts/dist.sh`
+- [ ] Automatic updates with Sparkle
+- [ ] Make this repo public
+- [ ] A one-page site at `voice.farol.sh`
+- [ ] Only claim what works today: local, private and free. No agent control or "OK Farol" until they ship
+
+**Next, and the reason this app exists: step 3, Control Farol.** Don't stop at dictation.
+
+## 3. Control Farol
 
 Done when you can switch sessions and message agents from any app, and it opens Farol if it's closed. The rules were first tried on Farol's `feat/voice-input` branch, which stays as a reference and won't be merged.
 
@@ -44,14 +56,14 @@ Done when you can switch sessions and message agents from any app, and it opens 
 - Launch Farol and wait for its socket when it's closed
 - A shell command spoken aloud is always read back and only runs after you say yes
 
-## 3. Spoken replies
+## 4. Spoken replies
 
 Hear what agents ask, and answer them, using `farol sessions`, `read` and `send`.
 
 - Kokoro for speech. Compare it with Cartesia and ElevenLabs on real spoken summaries
 - Compare Parakeet with WhisperKit and Deepgram Flux on about 100 real commands, aiming for 95% understood
 
-## 4. Conductor
+## 5. Conductor
 
 A small, fast agent that hears you, works out which session you mean, and acts.
 
@@ -59,7 +71,7 @@ A small, fast agent that hears you, works out which session you mean, and acts.
 - Routing, with the target locked and shown before anything is sent
 - Rebuilding your request from session context, with your approval before it's sent
 
-## 5. "OK Farol"
+## 6. "OK Farol"
 
 Comes after the assistant is worth waking. It becomes one more toggle in Settings. Test "OK Farol" and "hey Farol" aloud and pick one before training.
 
@@ -82,22 +94,22 @@ openWakeWord's pretrained models are non-commercial, but its code is Apache 2.0 
 
 Calling CoreML in a long loop without an autorelease pool crashes after a few minutes of audio. Anything that listens all day has to drain one per chunk.
 
-## 6. Natural talking
+## 7. Natural talking
 
 - Smart Turn v3 with Silero VAD, so a thinking pause doesn't end your turn
 - Echo cancelling, so Farol never wakes itself
 - Instant interruption
 - Live text, then a final pass, then correction against session, branch and file names
 
-## 7. Public beta
+## 8. Agent launch
 
-Safety gating, then launch as the open source voice harness, with an uncut recording of the launch test.
+The big launch, once it runs your agents by voice. Safety gating, then launch as the open source voice harness, with an uncut recording of the launch test.
 
-## 8. Phone
+## 9. Phone
 
 Voice in Farol for iPhone over Remote. Talking to your agents away from your desk is what SKI's site doesn't offer today.
 
-## 9. Chains and PRs by voice
+## 10. Chains and PRs by voice
 
 One command starts a planning agent and then a building agent. PRs by voice on Farol's worktrees. These come last because they depend on everything above.
 
