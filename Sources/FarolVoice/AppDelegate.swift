@@ -51,9 +51,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showSettings() {
-        let window = settingsWindow ?? Self.window(title: "Farol Voice", rootView: SettingsView(library: library, preferences: preferences))
+        let window = settingsWindow ?? makeSettingsWindow()
         settingsWindow = window
         present(window)
+    }
+
+    /// Resizable and scrolling, so nothing is out of reach on a small screen. It still starts each tab at the size that tab needs.
+    private func makeSettingsWindow() -> NSWindow {
+        var view = SettingsView(library: library, preferences: preferences)
+        view.onFit = { [weak self] height in self?.fitSettings(to: height) }
+        let host = NSHostingController(rootView: view)
+        host.sizingOptions = []
+        let window = Self.window(title: "Farol Voice", host: host)
+        window.styleMask.insert(.resizable)
+        window.contentMinSize = NSSize(width: 500, height: 300)
+        window.setContentSize(NSSize(width: 500, height: 560))
+        window.center()
+        return window
+    }
+
+    /// Keeps the title bar where it is, and stays on the screen. Anything taller scrolls.
+    private func fitSettings(to height: CGFloat) {
+        guard let window = settingsWindow, let screen = window.screen ?? NSScreen.main else { return }
+        var frame = window.frameRect(forContentRect: NSRect(origin: .zero, size: NSSize(width: window.contentLayoutRect.width, height: height)))
+        frame.size.height = min(frame.height, screen.visibleFrame.height)
+        frame.origin.x = window.frame.minX
+        frame.origin.y = max(window.frame.maxY - frame.height, screen.visibleFrame.minY)
+        window.setFrame(frame, display: true, animate: window.isVisible)
     }
 
     private func present(_ window: NSWindow) {
@@ -61,10 +85,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.makeKeyAndOrderFront(nil)
     }
 
-    /// The window takes its size from its content, so there's never an empty gap or a scroll bar.
+    /// The window takes its size from its content, so there's never an empty gap.
     private static func window<Content: View>(title: String, rootView: Content) -> NSWindow {
         let host = NSHostingController(rootView: rootView)
         host.sizingOptions = [.preferredContentSize]
+        return window(title: title, host: host)
+    }
+
+    private static func window(title: String, host: NSViewController) -> NSWindow {
         let window = NSWindow(contentViewController: host)
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.title = title

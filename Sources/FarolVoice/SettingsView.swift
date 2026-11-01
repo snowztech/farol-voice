@@ -33,6 +33,12 @@ struct SettingsView: View {
     @State private var newWord = ""
     @State private var tryIt = ""
     @State var farolStatus: FarolStatus?
+    /// Asks the window to fit this much height. It's only asked when a tab opens, so a size you chose stays until you change tabs.
+    var onFit: ((CGFloat) -> Void)?
+    @State private var fitNext = true
+
+    /// The tabs above the scrolling part.
+    private static let tabsHeight: CGFloat = 64
 
     private let permissionCheck = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private let farolCheck = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
@@ -48,23 +54,29 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity)
             .overlay(alignment: .bottom) { Rectangle().fill(Theme.line).frame(height: 1) }
 
-            VStack(alignment: .leading, spacing: 0) {
-                switch section {
-                case .general: general
-                case .dictation: dictation
-                case .farol: farol
-                case .models: models
-                case .about: about
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    switch section {
+                    case .general: general
+                    case .dictation: dictation
+                    case .farol: farol
+                    case .models: models
+                    case .about: about
+                    }
                 }
+                .padding(.horizontal, 28)
+                .padding(.top, 2)
+                .padding(.bottom, 22)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(GeometryReader { Color.clear.preference(key: ContentHeight.self, value: $0.size.height) })
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 2)
-            .padding(.bottom, 22)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        // The window takes its height from the tab showing, so no tab has empty space.
-        .frame(width: 500)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(minWidth: 500, maxWidth: .infinity, minHeight: 300, maxHeight: .infinity)
+        .onPreferenceChange(ContentHeight.self) { height in
+            guard fitNext, height > 0 else { return }
+            fitNext = false
+            onFit?(height + Self.tabsHeight)
+        }
         .background(Theme.background)
         .foregroundStyle(Theme.text)
         .preferredColorScheme(.dark)
@@ -73,7 +85,10 @@ struct SettingsView: View {
             accessibility = Permissions.accessibility
         }
         .onAppear(perform: library.refreshSizes)
-        .onChange(of: section) { _, _ in checkFarol() }
+        .onChange(of: section) { _, _ in
+            fitNext = true
+            checkFarol()
+        }
         .onReceive(farolCheck) { _ in checkFarol() }
         .alert(item: $modelToDelete) { model in
             Alert(
@@ -371,6 +386,13 @@ private struct PulsingIcon: View {
                              with: .color(Color(red: 0x13 / 255, green: 0x18 / 255, blue: 0x25 / 255).opacity(dim * 0.55)))
             }
         }
+    }
+}
+
+private struct ContentHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
