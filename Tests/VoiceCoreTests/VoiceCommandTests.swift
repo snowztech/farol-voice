@@ -117,3 +117,52 @@ private func said(_ text: String) -> VoiceCommand { VoiceCommand.parse(text, ses
     #expect(said("Farol, go to dashmin") == dashmin)
     #expect(said("Could you tell read docs to summarize") == .session(id: "6", text: "summarize", send: false, focus: false))
 }
+
+@Test func findsTheCommandAnywhereInTheSentence() {
+    let dev = [VoiceCommand.Target(id: "d", name: "dev")]
+    let there = VoiceCommand.session(id: "d", text: nil, send: false, focus: true)
+    #expect(VoiceCommand.parse("Can you try to go to dev?", sessions: dev) == there)
+    #expect(VoiceCommand.parse("Hmm, I think I'd like to switch to dev.", sessions: dev) == there)
+    #expect(VoiceCommand.parse("So could you maybe tell dev to run the tests", sessions: dev) == .session(id: "d", text: "run the tests", send: false, focus: false))
+}
+
+@Test func hearsFarolHoweverItsWritten() {
+    for heard in ["Open for all.", "Open far all", "Open Farrell", "open pharaoh", "Can you open parole?", "Open fair all", "open feral", "Farol", "For all."] {
+        #expect(said(heard) == .openFarol, "\(heard)")
+    }
+}
+
+@Test func goingToSomethingThatSoundsLikeFarolIsASession() {
+    #expect(said("Go to for all") == .choices(ids: ["3", "5"]))
+    #expect(said("Go to pharaoh") == .choices(ids: ["3", "5"]))
+}
+
+@Test func matchesSessionNamesBySound() {
+    #expect(said("Go to dash men") == .session(id: "7", text: nil, send: false, focus: true))
+    #expect(said("Go to ping buddy") == .session(id: "2", text: nil, send: false, focus: true))
+}
+
+@Test func soundingAlikeNeverBeatsTheRightName() {
+    let sidebar = [VoiceCommand.Target(id: "a", name: "farol"), VoiceCommand.Target(id: "b", name: "farrell")]
+    #expect(VoiceCommand.parse("go to farrell", sessions: sidebar) == .session(id: "b", text: nil, send: false, focus: true))
+}
+
+@Test func doesNotGuessAtSomethingElse() {
+    #expect(said("Go to carol") == .noSession("carol"))
+    #expect(said("Go to kubernetes") == .noSession("kubernetes"))
+    #expect(said("The weather is nice") == .notUnderstood)
+}
+
+@Test func recognizesCommonMishearingsOfCommands() {
+    let there = VoiceCommand.session(id: "7", text: nil, send: false, focus: true)
+    #expect(said("Got to dashmin") == there)
+    #expect(said("Goto dashmin") == there)
+    #expect(said("Go to the dashmin terminal") == there)
+}
+
+@Test func startsTasksHoweverTheyreSaid() {
+    #expect(said("Can you start a new task to add search") == .newTask(agent: nil, text: "add search"))
+    #expect(said("Create a task, add search") == .newTask(agent: nil, text: "add search"))
+    #expect(said("New clod task, add search") == .newTask(agent: "claude", text: "add search"))
+    #expect(said("Make a new code x task to add search") == .newTask(agent: "codex", text: "add search"))
+}
