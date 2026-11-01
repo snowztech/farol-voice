@@ -9,6 +9,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let library = ModelLibrary()
     private let preferences = Preferences()
     private let updates = Updates()
+    /// The first tab can be measured before its window exists.
+    private var waitingHeight: CGFloat?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = Self.editMenu()
@@ -53,6 +55,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showSettings() {
         let window = settingsWindow ?? makeSettingsWindow()
         settingsWindow = window
+        if let waitingHeight {
+            self.waitingHeight = nil
+            fitSettings(to: waitingHeight)
+        }
         present(window)
     }
 
@@ -72,7 +78,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Keeps the title bar where it is, and stays on the screen. Anything taller scrolls.
     private func fitSettings(to height: CGFloat) {
-        guard let window = settingsWindow, let screen = window.screen ?? NSScreen.main else { return }
+        guard let window = settingsWindow else {
+            waitingHeight = height
+            return
+        }
+        guard let screen = window.screen ?? NSScreen.main else { return }
         var frame = window.frameRect(forContentRect: NSRect(origin: .zero, size: NSSize(width: window.contentLayoutRect.width, height: height)))
         frame.size.height = min(frame.height, screen.visibleFrame.height)
         frame.origin.x = window.frame.minX

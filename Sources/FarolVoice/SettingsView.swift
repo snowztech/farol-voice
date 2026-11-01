@@ -33,10 +33,11 @@ struct SettingsView: View {
     @State private var newWord = ""
     @State private var tryIt = ""
     @State var farolStatus: FarolStatus?
-    @State private var showOtherModels = false
     /// Asks the window to fit this much height. It's only asked when a tab opens, so a size you chose stays until you change tabs.
     var onFit: ((CGFloat) -> Void)?
-    @State private var fitNext = true
+    /// Until when a new height means the window should fit it. Short, so it's over before you could resize anything yourself.
+    @State private var fitUntil = Date().addingTimeInterval(1)
+    @State private var contentHeight: CGFloat = 0
 
     /// The tabs above the scrolling part.
     private static let tabsHeight: CGFloat = 64
@@ -74,9 +75,8 @@ struct SettingsView: View {
         }
         .frame(minWidth: 500, maxWidth: .infinity, minHeight: 300, maxHeight: .infinity)
         .onPreferenceChange(ContentHeight.self) { height in
-            guard fitNext, height > 0 else { return }
-            fitNext = false
-            onFit?(height + Self.tabsHeight)
+            contentHeight = height
+            fitIfNew()
         }
         .background(Theme.background)
         .foregroundStyle(Theme.text)
@@ -87,7 +87,9 @@ struct SettingsView: View {
         }
         .onAppear(perform: library.refreshSizes)
         .onChange(of: section) { _, _ in
-            fitNext = true
+            // The new tab may already have been measured by now, or may not be yet, so this covers both.
+            fitUntil = Date().addingTimeInterval(0.3)
+            DispatchQueue.main.async { fitIfNew() }
             checkFarol()
         }
         // Switches by itself only to what's already installed. A download is always your choice.
@@ -100,6 +102,11 @@ struct SettingsView: View {
                 primaryButton: .destructive(Text("Delete")) { library.delete(model) },
                 secondaryButton: .cancel())
         }
+    }
+
+    private func fitIfNew() {
+        guard Date() < fitUntil, contentHeight > 0 else { return }
+        onFit?(contentHeight + Self.tabsHeight)
     }
 
     // MARK: Sections
@@ -234,16 +241,9 @@ struct SettingsView: View {
         SettingRow(title: "Language", detail: preferences.language == nil ? "Detected as you talk. Choose yours for the best model." : nil) {
             LanguagePicker(preferences: preferences)
         }
-        GroupTitle(title: "Best for you")
-        modelRow(bestModel)
-        // The one in use is never hidden, even when it isn't the best for your language.
-        if showOtherModels || library.chosen != bestModel {
-            ForEach(VoiceModel.allCases.filter { $0 != bestModel }, content: modelRow)
-        } else {
-            QuietButton(title: "Show other models") { showOtherModels = true }
-                .padding(.top, 8)
-                .padding(.leading, -9)
-        }
+        GroupTitle(title: "Models")
+        // Only two, so both stay in view, with the one for your language first.
+        ForEach([bestModel] + VoiceModel.allCases.filter { $0 != bestModel }, content: modelRow)
         if let problem = library.problem {
             Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)
         }
@@ -296,7 +296,7 @@ struct SettingsView: View {
     }
 
     private func modelRow(_ model: VoiceModel) -> some View {
-        SettingRow(title: model.friendlyName, note: model.title, detail: detail(of: model)) {
+        SettingRow(title: model.friendlyName, note: model == bestModel ? "\(model.title), recommended" : model.title, detail: detail(of: model)) {
             HStack(spacing: 8) {
                 if library.installing == model {
                     QuietButton(title: "Cancel", action: library.cancelInstall)
@@ -428,18 +428,25 @@ private struct InUseLabelStyle: LabelStyle {
 struct LanguagePicker: View {
     @ObservedObject var preferences: Preferences
 
-    /// In your Mac's language, in alphabetical order.
-    private var languages: [(code: String, name: String)] {
-        SpeechLanguage.codes
-            .map { ($0, Locale.current.localizedString(forLanguageCode: $0)?.localizedCapitalized ?? $0) }
-            .sorted { $0.1.localizedCaseInsensitiveCompare($1.1) == .orderedAscending }
+    private static func name(of code: String) -> String? {
+        Locale.current.localizedString(forLanguageCode: code)?.localizedCapitalized
     }
+
+    private static let yours = SpeechLanguage.yours(preferred: Locale.preferredLanguages)
+
+    /// In your Mac's language, in alphabetical order, leaving out any it has no name for.
+    private static let all: [(code: String, name: String)] = SpeechLanguage.codes
+        .compactMap { code in name(of: code).map { (code, $0) } }
+        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
 
     var body: some View {
         Picker("Language", selection: $preferences.languageChoice) {
             Text("Automatic").tag(SpeechLanguage.automatic)
             Divider()
-            ForEach(languages, id: \.code) { Text($0.name).tag($0.code) }
+            ForEach(Self.yours, id: \.self) { Text(Self.name(of: $0) ?? $0).tag($0) }
+            Divider()
+            // A second copy of your languages would give the menu two items for one choice.
+            ForEach(Self.all.filter { !Self.yours.contains($0.code) }, id: \.code) { Text($0.name).tag($0.code) }
         }
         .labelsHidden()
         .controlSize(.small)

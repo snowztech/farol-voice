@@ -55,7 +55,6 @@ public enum VoiceModel: String, CaseIterable, Identifiable, Sendable {
         self == .whisperTurbo ? language : nil
     }
 
-    fileprivate static var fastLanguages: Set<String> { parakeetLanguages }
 }
 
 /// What you choose instead of a model.
@@ -63,9 +62,20 @@ public enum SpeechLanguage {
     /// Saved when you'd rather have the language detected, or speak several.
     public static let automatic = "auto"
 
-    /// Parakeet's, and the most spoken of what only Whisper understands. Whisper knows more, and these are enough to choose from.
-    public static var codes: [String] {
-        VoiceModel.fastLanguages.union(["ar", "bn", "ca", "fa", "he", "hi", "id", "ja", "ko", "ms", "no", "th", "tr", "ur", "vi", "zh"]).sorted()
+    /// Everything Whisper understands, which includes all of Parakeet's. A long list has your language in it, and a short one might not.
+    public static let codes = [
+        "af", "am", "ar", "as", "az", "ba", "be", "bg", "bn", "bo", "br", "bs", "ca", "cs", "cy", "da", "de", "el", "en", "es",
+        "et", "eu", "fa", "fi", "fo", "fr", "gl", "gu", "ha", "haw", "he", "hi", "hr", "ht", "hu", "hy", "id", "is", "it", "ja",
+        "jw", "ka", "kk", "km", "kn", "ko", "la", "lb", "ln", "lo", "lt", "lv", "mg", "mi", "mk", "ml", "mn", "mr", "ms", "mt",
+        "my", "ne", "nl", "nn", "no", "oc", "pa", "pl", "ps", "pt", "ro", "ru", "sa", "sd", "si", "sk", "sl", "sn", "so", "sq",
+        "sr", "su", "sv", "sw", "ta", "te", "tg", "th", "tk", "tl", "tr", "tt", "uk", "ur", "uz", "vi", "yi", "yo", "yue", "zh",
+    ]
+
+    /// Your Mac's languages, for the top of the list, so nobody has to scroll a hundred names to find theirs.
+    public static func yours(preferred: [String]) -> [String] {
+        var found: [String] = []
+        for code in preferred.map(code(of:)) where codes.contains(code) && !found.contains(code) { found.append(code) }
+        return found
     }
 
     /// "pt-PT" and "fr_FR" come down to "pt" and "fr".

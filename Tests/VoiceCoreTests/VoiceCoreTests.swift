@@ -80,6 +80,18 @@ final class VoiceCoreTests: XCTestCase {
         XCTAssertEqual(SpeechLanguage.initial(preferred: []), SpeechLanguage.automatic)
     }
 
+    func testPutsYourLanguagesFirst() {
+        XCTAssertEqual(SpeechLanguage.yours(preferred: ["pt-PT", "en-GB", "pt-BR", "tlh"]), ["pt", "en"])
+    }
+
+    func testOffersEveryLanguageEitherModelKnows() {
+        XCTAssertEqual(SpeechLanguage.codes.count, Set(SpeechLanguage.codes).count)
+        for code in ["bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "hr", "hu", "it", "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk"] {
+            XCTAssertTrue(SpeechLanguage.codes.contains(code), code)
+            XCTAssertEqual(VoiceModel.best(for: code), .parakeetV3, code)
+        }
+    }
+
     func testEveryLanguageOnOfferCanBeChosenFromTheList() {
         XCTAssertTrue(SpeechLanguage.codes.contains("en"))
         XCTAssertTrue(SpeechLanguage.codes.contains("ja"))
