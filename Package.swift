@@ -16,16 +16,11 @@ let package = Package(
             .product(name: "ParakeetASR", package: "speech-swift"),
             .product(name: "WhisperASR", package: "speech-swift"),
         ]),
-        .target(name: "WakeWord", dependencies: [.product(name: "SpeechWakeWord", package: "speech-swift")]),
         // The menu bar app.
         .executableTarget(name: "FarolVoice", dependencies: ["VoiceCore", "VoiceEngine"], linkerSettings: [.linkedFramework("Carbon")]),
         // For measuring models from the terminal.
-        .executableTarget(name: "farol-voice", dependencies: [
-            "VoiceCore", "VoiceEngine", "WakeWord",
-            .product(name: "SpeechWakeWord", package: "speech-swift"),
-        ]),
+        .executableTarget(name: "farol-voice", dependencies: ["VoiceCore", "VoiceEngine"]),
         .testTarget(name: "VoiceCoreTests", dependencies: ["VoiceCore"]),
-        .testTarget(name: "WakeWordTests", dependencies: ["WakeWord"]),
     ],
     swiftLanguageModes: [.v5]
 )
