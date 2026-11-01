@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Farol Voice: free, private dictation for Mac</title>
+  <meta name="description" content="Hold a key, talk, and your words appear in any app. Farol Voice is free, open source dictation for macOS that runs entirely on your Mac.">
+  <link rel="canonical" href="https://voice.farol.sh/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Farol Voice">
+  <meta property="og:url" content="https://voice.farol.sh/">
+  <meta property="og:title" content="Farol Voice: free, private dictation for Mac">
+  <meta property="og:description" content="Hold a key, talk, and your words appear in any app. Everything runs on your Mac.">
+  <meta property="og:image" content="https://voice.farol.sh/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="icon.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Farol Voice",
+    "description": "Free, open source dictation for macOS that runs entirely on your Mac.",
+    "url": "https://voice.farol.sh/",
+    "image": "https://voice.farol.sh/og.png",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "macOS 15 or later",
+    "processorRequirements": "Apple silicon",
+    "downloadUrl": "https://github.com/snowztech/farol-voice/releases/latest/download/FarolVoice.dmg",
+    "releaseNotes": "https://github.com/snowztech/farol-voice/blob/main/CHANGELOG.md",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "Lucas Neves Pereira" },
+    "sameAs": ["https://github.com/snowztech/farol-voice"]
+  }
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@snowztech/ui-css@0.2/dist/snowztech-ui.min.css">
+  <script>
+    if (matchMedia("(prefers-color-scheme: light)").matches) document.documentElement.dataset.theme = "light";
+  </script>
+  <style>
+    body {
+      margin: 0;
+      background: var(--sn-bg);
+      color: var(--sn-fg);
+      font-family: var(--sn-font-mono);
+      font-size: var(--sn-text-base);
+      line-height: var(--sn-leading-normal);
+    }
+    a { color: inherit; }
+    .column { max-width: 640px; margin: 0 auto; padding: 0 20px; }
+    .wide { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+    .hero { text-align: center; padding-top: 60px; }
+    .hero img { width: 80px; height: 80px; }
+    h1 { font-size: 30px; font-weight: 600; margin: 14px 0 6px; letter-spacing: -0.02em; }
+    .tagline { display: block; color: var(--sn-fg-muted); margin: 6px 0 30px; font-size: var(--sn-text-md); font-weight: 400; letter-spacing: 0; }
+    .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .actions .sn-btn { text-decoration: none; transition: opacity var(--sn-base) var(--sn-ease), border-color var(--sn-base) var(--sn-ease); }
+    /* ui-css colors every a:hover with the accent, which wins over the button's own text color. */
+    .actions a.sn-btn--primary:hover { color: var(--sn-fg-inverse); background: var(--sn-fg); border-color: var(--sn-fg); opacity: 0.85; }
+    .actions a.sn-btn--secondary:hover { color: var(--sn-fg); }
+    .fine { color: var(--sn-fg-subtle); font-size: var(--sn-text-xs); margin: 14px 0 0; }
+
+    /* The real thing in small: the words appear while the pill listens, then it thinks, like the app. */
+    .demo {
+      position: relative; margin: 44px auto 0; max-width: 620px;
+      border: 1px solid var(--sn-border-strong); border-radius: 12px; background: #0d1018; color: #dfe3ec;
+      height: 210px; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+    }
+    .demo::before {
+      content: ""; position: absolute; inset: -30% 15% auto; height: 80%;
+      background: radial-gradient(ellipse at center, rgba(113, 173, 255, 0.14), transparent 70%);
+      filter: blur(24px); pointer-events: none;
+    }
+    .demo .words {
+      position: absolute; left: 24px; right: 24px; top: 28px; margin: 0; text-align: left;
+      font-size: var(--sn-text-sm); white-space: nowrap; overflow: hidden;
+      width: 0; animation: words 7s infinite;
+    }
+    .demo .words::after { content: ""; display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -2px; background: #71adff; }
+    @keyframes words { 0%, 58% { width: 0; } 59%, 92% { width: 92%; } 100% { width: 0; } }
+    .pill {
+      position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 2.5px; height: 30px; padding: 0 14px; border-radius: 15px;
+      background: #0d1018; border: 1px solid #2e3037; animation: pill 7s infinite;
+    }
+    @keyframes pill { 0%, 2% { opacity: 0; } 5%, 56% { opacity: 1; } 59%, 100% { opacity: 0; } }
+    .pill i { display: block; width: 2.5px; height: 16px; border-radius: 2px; background: #dfe3ec; transform-origin: center; animation: voice 0.9s ease-in-out infinite alternate; }
+    .pill i:nth-child(1) { animation-delay: -0.1s; --top: 0.45; }
+    .pill i:nth-child(2) { animation-delay: -0.5s; --top: 0.7; }
+    .pill i:nth-child(3) { animation-delay: -0.25s; --top: 0.9; }
+    .pill i:nth-child(4) { animation-delay: -0.7s; --top: 1; }
+    .pill i:nth-child(5) { animation-delay: -0.35s; --top: 0.9; }
+    .pill i:nth-child(6) { animation-delay: -0.6s; --top: 0.7; }
+    .pill i:nth-child(7) { animation-delay: -0.15s; --top: 0.45; }
+    @keyframes voice { from { transform: scaleY(0.2); } to { transform: scaleY(var(--top)); } }
+    @media (prefers-reduced-motion: reduce) {
+      .demo .words { animation: none; width: 92%; }
+      .pill, .pill i { animation: none; }
+      .pill i { transform: scaleY(var(--top)); }
+    }
+
+    .features { list-style: none; margin: 88px auto 0; display: grid; gap: 28px; }
+    @media (min-width: 760px) { .features { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 980px) { .features { grid-template-columns: repeat(3, 1fr); } }
+    .features h2 { font-size: inherit; font-weight: 500; margin: 0 0 6px; }
+    .features p { color: var(--sn-fg-muted); font-size: var(--sn-text-sm); margin: 0; }
+
+    .shots { margin: 88px auto 0; display: grid; gap: 24px; align-items: start; }
+    @media (min-width: 860px) { .shots { grid-template-columns: repeat(2, 1fr); } }
+    .shots figure { margin: 0; }
+    .shots img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--sn-border-strong); }
+    .shots figcaption { color: var(--sn-fg-muted); font-size: var(--sn-text-sm); margin-top: 10px; text-align: center; }
+
+    .next { margin-top: 96px; text-align: center; }
+    .next h2, .faq h2 { font-size: 20px; font-weight: 500; margin: 0 0 12px; letter-spacing: -0.01em; text-align: center; }
+    .next p { color: var(--sn-fg-muted); font-size: var(--sn-text-sm); margin: 0; }
+
+    .faq { margin-top: 96px; }
+    .faq h3 { font-size: inherit; font-weight: 500; margin: 28px 0 6px; }
+    .faq p { color: var(--sn-fg-muted); font-size: var(--sn-text-sm); margin: 0; }
+
+    footer {
+      width: min(1040px, calc(100% - 40px)); margin: 96px auto 0; padding: 32px 0 40px;
+      border-top: 1px solid var(--sn-border-subtle);
+      color: var(--sn-fg-subtle); font-size: var(--sn-text-xs);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    footer a { color: var(--sn-fg-muted); text-decoration: none; }
+    footer a:hover { color: var(--sn-fg); }
+    footer nav { display: flex; gap: 18px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero column">
+      <img src="icon.png" alt="Farol Voice icon" width="80" height="80">
+      <h1>Farol Voice <span class="tagline">Hold a key, talk, and your words appear in any app. It all runs on your Mac.</span></h1>
+      <div class="actions">
+        <a class="sn-btn sn-btn--primary sn-btn--lg" href="https://github.com/snowztech/farol-voice/releases/latest/download/FarolVoice.dmg">Download for Mac</a>
+        <a class="sn-btn sn-btn--secondary sn-btn--lg" href="https://github.com/snowztech/farol-voice">GitHub</a>
+      </div>
+      <p class="fine">Apple silicon, macOS 15+. Free and open source.</p>
+
+      <div class="demo" role="img" aria-label="An animation of the Farol Voice waveform while someone talks, followed by their words appearing as text.">
+        <p class="words">Let's ship the release on Friday.</p>
+        <div class="pill" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <ul class="features wide">
+      <li><h2>Works everywhere</h2><p>Your editor, your terminal, Slack, a browser. It types wherever your cursor is, and puts your clipboard back afterwards.</p></li>
+      <li><h2>Stays on your Mac</h2><p>Speech runs on your own machine. Audio is never sent anywhere or saved, and once a model is installed it needs no network.</p></li>
+      <li><h2>No account, no subscription</h2><p>Free and open source under the MIT license. Install it, allow two permissions and start talking.</p></li>
+      <li><h2>Your choice of model</h2><p>Parakeet for speed in English and 24 more languages, or Whisper for about 100 languages. Install, switch and delete them yourself.</p></li>
+      <li><h2>Gets your words right</h2><p>Add the names and terms you use, and close matches become exactly what you wrote.</p></li>
+      <li><h2>Careful with your words</h2><p>It won't type into a password field. Switch apps while it's working, and the text goes to your clipboard instead of the wrong window.</p></li>
+    </ul>
+
+    <div class="shots wide">
+      <figure>
+        <img src="setup.png" width="960" height="760" loading="lazy" alt="The Farol Voice setup window, with steps to allow the microphone and Accessibility, install a speech model and try it.">
+        <figcaption>Set up in four steps.</figcaption>
+      </figure>
+      <figure>
+        <img src="settings.png" width="1000" height="772" loading="lazy" alt="Farol Voice settings, showing speech models to install and a list of your own words.">
+        <figcaption>Your models, your words.</figcaption>
+      </figure>
+    </div>
+
+    <section class="next column" aria-labelledby="next-title">
+      <h2 id="next-title">Where it's going</h2>
+      <p>Dictation is the first step. Next, it's becoming a voice assistant for <a href="https://farol.sh">Farol</a>, the terminal for coding agents: switch sessions, talk to your agents and hear them answer. Follow along on the <a href="https://github.com/snowztech/farol-voice/blob/main/ROADMAP.md">roadmap</a>.</p>
+    </section>
+
+    <section class="faq column" aria-labelledby="faq-title">
+      <h2 id="faq-title">Questions</h2>
+
+      <h3>Is it really free?</h3>
+      <p>Yes. It's open source under the MIT license, with no account or subscription.</p>
+
+      <h3>Does my voice leave my Mac?</h3>
+      <p>No. Speech is turned into text on your Mac, and audio is never sent anywhere or saved. The app only goes online to download a model you choose to install, and to check for its own updates.</p>
+
+      <h3>Why does it need Accessibility access?</h3>
+      <p>macOS requires it for two things: noticing your key while you're in another app, and typing your words for you. It only looks for the key you chose, and doesn't record or store what you type. The code is open if you'd like to read it.</p>
+
+      <h3>Which languages does it understand?</h3>
+      <p>Parakeet V3 covers English and 24 more languages, most of them European. Whisper covers about 100.</p>
+
+      <h3>What do I need to run it?</h3>
+      <p>A Mac with Apple silicon and macOS 15 or later, and about 600 MB of disk space for the Parakeet model.</p>
+
+      <h3>Do I need Farol to use it?</h3>
+      <p>No. It works on its own in any app. <a href="https://farol.sh">Farol</a> is a separate terminal for coding agents, and working together with it is what's coming next.</p>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 Lucas Neves Pereira, <a href="https://github.com/snowztech">snowztech</a></span>
+    <nav aria-label="Footer">
+      <a href="https://farol.sh">Farol</a>
+      <a href="https://github.com/snowztech/farol-voice">GitHub</a>
+      <a href="https://github.com/snowztech/farol-voice/blob/main/CHANGELOG.md">Changelog</a>
+      <a href="https://github.com/snowztech/farol-voice/blob/main/LICENSE">MIT</a>
+    </nav>
+  </footer>
+</body>
+</html>
