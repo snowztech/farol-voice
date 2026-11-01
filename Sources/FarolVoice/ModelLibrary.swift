@@ -13,14 +13,13 @@ final class ModelLibrary: ObservableObject {
     @Published private(set) var problem: String?
     @Published private(set) var sizes: [VoiceModel: Int64] = [:]
 
-    let recommended = VoiceModel.recommended(languages: Locale.preferredLanguages)
     let engine = SpeechEngine(folder: SpeechEngine.defaultFolder)
     private var installTask: Task<Void, Never>?
 
     var isReady: Bool { installed.contains(chosen) }
 
     init() {
-        chosen = UserDefaults.standard.string(forKey: Self.chosenKey).flatMap(VoiceModel.init) ?? recommended
+        chosen = UserDefaults.standard.string(forKey: Self.chosenKey).flatMap(VoiceModel.init) ?? VoiceModel.recommended(languages: Locale.preferredLanguages)
         installed = Set(VoiceModel.allCases.filter(engine.isInstalled))
         if !installed.contains(chosen), let other = installed.first { chosen = other }
         refreshSizes()

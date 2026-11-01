@@ -38,9 +38,10 @@ struct SetupView: View {
             step(2, "Allow Accessibility", detail: "Lets the key work everywhere, and types your words for you.", done: accessibility) {
                 QuietButton(title: "Allow", prominent: true, action: Permissions.askForAccessibility)
             }
-            step(3, "Install a speech model", detail: modelDetail, done: library.isReady) {
+            step(3, "Choose your language", detail: modelDetail, done: library.isReady) {
                 if library.installing == nil {
-                    QuietButton(title: "Install", prominent: true) { library.install(library.recommended) }
+                    LanguagePicker(preferences: preferences)
+                    QuietButton(title: "Install", prominent: true) { library.install(bestModel) }
                 } else {
                     QuietButton(title: "Cancel", action: library.cancelInstall)
                 }
@@ -88,10 +89,12 @@ struct SetupView: View {
         }
     }
 
+    private var bestModel: VoiceModel { VoiceModel.best(for: preferences.language) }
+
     private var modelDetail: String {
         if library.installing != nil { return library.installStatus }
-        let model = library.isReady ? library.chosen : library.recommended
-        return library.isReady ? "\(model.title) is ready." : "\(model.title). \(model.downloadSize)"
+        if library.isReady { return "\(library.chosen.friendlyName) speech model is ready." }
+        return "Installs the best model for it. \(bestModel.downloadSize)"
     }
 
     private func step<Action: View>(_ number: Int, _ title: String, detail: String, done: Bool, @ViewBuilder action: () -> Action) -> some View {

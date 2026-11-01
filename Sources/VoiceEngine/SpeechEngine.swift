@@ -50,12 +50,13 @@ public actor SpeechEngine {
         if online { FileManager.default.createFile(atPath: marker(of: model).path, contents: nil) }
     }
 
-    public func transcribe(_ samples: [Float]) async throws -> String {
+    /// `language` holds the model to one language, for a model that can be.
+    public func transcribe(_ samples: [Float], language: String? = nil) async throws -> String {
         switch loaded?.engine {
         case .parakeet(let engine):
             return try autoreleasepool { try engine.transcribeAudio(samples, sampleRate: 16000) }
         case .whisper(let engine):
-            return try await engine.transcribeAudio(samples, sampleRate: 16000)
+            return try await engine.transcribeAudio(samples, sampleRate: 16000, language: language)
         case nil:
             throw CocoaError(.featureUnsupported)
         }

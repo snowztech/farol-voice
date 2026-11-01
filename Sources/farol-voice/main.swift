@@ -4,7 +4,7 @@ import VoiceCore
 import VoiceEngine
 
 let usage = """
-usage: farol-voice transcribe <file.wav>... [--model parakeet-v3|whisper-turbo] [--words "Farol, snowztech"]
+usage: farol-voice transcribe <file.wav>... [--model parakeet-v3|whisper-turbo] [--words "Farol, snowztech"] [--language en]
        farol-voice understand <socket> <what you'd say>
 
 Files are 16 kHz mono WAV. Use this to compare models on the same recordings.
@@ -30,12 +30,17 @@ func transcribe(_ arguments: [String]) async throws {
     var files: [String] = []
     var model = VoiceModel.parakeetV3
     var words: [String] = []
+    var language: String?
     var index = 0
     while index < arguments.count {
         switch arguments[index] {
         case "--model":
             guard index + 1 < arguments.count, let chosen = VoiceModel(rawValue: arguments[index + 1]) else { fail(usage) }
             model = chosen
+            index += 1
+        case "--language":
+            guard index + 1 < arguments.count else { fail(usage) }
+            language = arguments[index + 1]
             index += 1
         case "--words":
             guard index + 1 < arguments.count else { fail(usage) }
@@ -54,7 +59,7 @@ func transcribe(_ arguments: [String]) async throws {
     for file in files {
         let samples = try readSamples(file)
         let started = Date()
-        let text = try await engine.transcribe(samples)
+        let text = try await engine.transcribe(samples, language: model.lockedLanguage(language))
         print(String(format: "%5.0f ms  ", Date().timeIntervalSince(started) * 1000) + DictationText.clean(text, customWords: words))
     }
 }

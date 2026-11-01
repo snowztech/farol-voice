@@ -33,6 +33,7 @@ struct SettingsView: View {
     @State private var newWord = ""
     @State private var tryIt = ""
     @State var farolStatus: FarolStatus?
+    @State private var showOtherModels = false
     /// Asks the window to fit this much height. It's only asked when a tab opens, so a size you chose stays until you change tabs.
     var onFit: ((CGFloat) -> Void)?
     @State private var fitNext = true
@@ -89,6 +90,8 @@ struct SettingsView: View {
             fitNext = true
             checkFarol()
         }
+        // Switches by itself only to what's already installed. A download is always your choice.
+        .onChange(of: preferences.languageChoice) { _, _ in library.use(bestModel) }
         .onReceive(farolCheck) { _ in checkFarol() }
         .alert(item: $modelToDelete) { model in
             Alert(
@@ -224,9 +227,23 @@ struct SettingsView: View {
         }
     }
 
+    private var bestModel: VoiceModel { VoiceModel.best(for: preferences.language) }
+
     @ViewBuilder private var models: some View {
-        GroupTitle(title: "Speech models")
-        ForEach(VoiceModel.allCases, content: modelRow)
+        GroupTitle(title: "What you speak")
+        SettingRow(title: "Language", detail: preferences.language == nil ? "Detected as you talk. Choose yours for the best model." : nil) {
+            LanguagePicker(preferences: preferences)
+        }
+        GroupTitle(title: "Best for you")
+        modelRow(bestModel)
+        // The one in use is never hidden, even when it isn't the best for your language.
+        if showOtherModels || library.chosen != bestModel {
+            ForEach(VoiceModel.allCases.filter { $0 != bestModel }, content: modelRow)
+        } else {
+            QuietButton(title: "Show other models") { showOtherModels = true }
+                .padding(.top, 8)
+                .padding(.leading, -9)
+        }
         if let problem = library.problem {
             Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)
         }
@@ -279,7 +296,7 @@ struct SettingsView: View {
     }
 
     private func modelRow(_ model: VoiceModel) -> some View {
-        SettingRow(title: model.title, note: model == library.recommended ? "Recommended" : nil, detail: detail(of: model)) {
+        SettingRow(title: model.friendlyName, note: model.title, detail: detail(of: model)) {
             HStack(spacing: 8) {
                 if library.installing == model {
                     QuietButton(title: "Cancel", action: library.cancelInstall)
@@ -405,6 +422,28 @@ private struct InUseLabelStyle: LabelStyle {
         .font(.system(size: 12))
         .foregroundStyle(Theme.muted)
         .padding(.horizontal, 9)
+    }
+}
+
+struct LanguagePicker: View {
+    @ObservedObject var preferences: Preferences
+
+    /// In your Mac's language, in alphabetical order.
+    private var languages: [(code: String, name: String)] {
+        SpeechLanguage.codes
+            .map { ($0, Locale.current.localizedString(forLanguageCode: $0)?.localizedCapitalized ?? $0) }
+            .sorted { $0.1.localizedCaseInsensitiveCompare($1.1) == .orderedAscending }
+    }
+
+    var body: some View {
+        Picker("Language", selection: $preferences.languageChoice) {
+            Text("Automatic").tag(SpeechLanguage.automatic)
+            Divider()
+            ForEach(languages, id: \.code) { Text($0.name).tag($0.code) }
+        }
+        .labelsHidden()
+        .controlSize(.small)
+        .fixedSize()
     }
 }
 

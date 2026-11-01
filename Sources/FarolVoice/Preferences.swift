@@ -51,6 +51,7 @@ final class Preferences: ObservableObject {
         static let customWords = "customWords"
         static let setupDone = "setupDone"
         static let waveSize = "waveSize"
+        static let language = "language"
     }
 
     /// The two keys can't be the same, so choosing one the other has swaps them.
@@ -75,6 +76,13 @@ final class Preferences: ObservableObject {
         didSet { UserDefaults.standard.set(waveSize.rawValue, forKey: Key.waveSize) }
     }
 
+    /// A language code, or `SpeechLanguage.automatic`. Starts from the Mac's own language.
+    @Published var languageChoice: String {
+        didSet { UserDefaults.standard.set(languageChoice, forKey: Key.language) }
+    }
+
+    var language: String? { SpeechLanguage.language(from: languageChoice) }
+
     var setupDone: Bool {
         get { UserDefaults.standard.bool(forKey: Key.setupDone) }
         set { UserDefaults.standard.set(newValue, forKey: Key.setupDone) }
@@ -89,6 +97,7 @@ final class Preferences: ObservableObject {
         commandKey = defaults.string(forKey: Key.commandKey).flatMap(TalkKey.init).flatMap { $0 == talk ? nil : $0 }
             ?? (talk == .rightOption ? .fn : .rightOption)
         customWords = defaults.string(forKey: Key.customWords) ?? "Farol"
+        languageChoice = defaults.string(forKey: Key.language) ?? SpeechLanguage.initial(preferred: Locale.preferredLanguages)
         waveSize = defaults.string(forKey: Key.waveSize).flatMap(WaveSize.init) ?? .compact
     }
 }
