@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let preferences = Preferences()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.mainMenu = Self.editMenu()
         let dictation = Dictation(library: library, preferences: preferences, openSettings: { [weak self] in self?.showSettings() })
         self.dictation = dictation
         menuBar = MenuBar(dictation: dictation, library: library, preferences: preferences, openSettings: { [weak self] in self?.showSettings() })
@@ -19,6 +20,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else if !library.isReady || !Permissions.accessibility || Permissions.microphone != .authorized {
             showSettings()
         }
+    }
+
+    /// Never shown, since this app has no menu bar of its own. Without it, text fields here ignore ⌘V, ⌘C and the rest, including the paste that types your words.
+    static func editMenu() -> NSMenu {
+        let edit = NSMenu(title: "Edit")
+        edit.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
+        edit.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        let item = NSMenuItem()
+        item.submenu = edit
+        let main = NSMenu()
+        main.addItem(NSMenuItem())
+        main.addItem(item)
+        return main
     }
 
     private func showSetup() {
