@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-01
+
+Tell Farol what to do from any app.
+
 ### Added
 
 - A second key to tell Farol what to do from any app: open Farol, go to a session, message one, or start a task. Needs a Farol with Settings, Agents, Let Farol Voice control sessions.
