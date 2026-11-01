@@ -26,6 +26,7 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources" "$app/Contents/Frameworks"
 cp "$root/.build/release/FarolVoice" "$app/Contents/MacOS/FarolVoice"
 cp "$root/assets/FarolVoice.icns" "$app/Contents/Resources/"
+cp "$root/THIRD_PARTY_NOTICES" "$root/LICENSE" "$app/Contents/Resources/"
 find "$root/.build/release/" -maxdepth 1 -name '*.bundle' -exec cp -R {} "$app/Contents/Resources/" \;
 
 # Sparkle installs updates. Its XPC services are only for sandboxed apps, which this isn't.

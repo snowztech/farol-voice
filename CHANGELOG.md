@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- The app now includes the full license texts of everything it ships with.
+
 ## [0.2.1] - 2026-11-01
 
 Settings look like one app.
