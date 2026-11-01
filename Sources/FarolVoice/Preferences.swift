@@ -52,6 +52,7 @@ final class Preferences: ObservableObject {
         static let setupDone = "setupDone"
         static let waveSize = "waveSize"
         static let language = "language"
+        static let speaksAgents = "speaksAgents"
     }
 
     /// The two keys can't be the same, so choosing one the other has swaps them.
@@ -70,6 +71,11 @@ final class Preferences: ObservableObject {
     /// As typed in Settings: words separated by commas.
     @Published var customWords: String {
         didSet { UserDefaults.standard.set(customWords, forKey: Key.customWords) }
+    }
+
+    /// Off until you ask for it, since it means the app talks and opens the mic by itself.
+    @Published var speaksAgents: Bool {
+        didSet { UserDefaults.standard.set(speaksAgents, forKey: Key.speaksAgents) }
     }
 
     @Published var waveSize: WaveSize {
@@ -99,6 +105,7 @@ final class Preferences: ObservableObject {
         customWords = defaults.string(forKey: Key.customWords) ?? "Farol"
         languageChoice = defaults.string(forKey: Key.language) ?? SpeechLanguage.initial(preferred: Locale.preferredLanguages)
         waveSize = defaults.string(forKey: Key.waveSize).flatMap(WaveSize.init) ?? .compact
+        speaksAgents = defaults.bool(forKey: Key.speaksAgents)
     }
 }
 

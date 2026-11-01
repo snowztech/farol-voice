@@ -66,12 +66,17 @@ In progress. Done when you can switch sessions and message agents from any app, 
 
 ## 4. Spoken replies
 
-Hear what agents ask, and answer them, even minutes later.
+In progress. Hear what agents ask, and answer them, even minutes later.
 
-- Live events from Farol's socket when a session waits or finishes
-- Text to speech on your Mac, starting with Kokoro
-- One voice at a time, with questions first, and never talking over you
-- After it speaks, answer without pressing anything
+- [x] Live updates from Farol's socket when a session waits or finishes
+- [x] Text to speech on your Mac, with the system's voices for now
+- [x] One voice at a time, with questions first, and never talking over you or a call
+- [x] After it speaks, answer without pressing anything
+- [x] Only answer menus Farol can read, and only with a clear yes, no or option
+- [ ] Use it on real work, and tune when it decides you've finished talking
+- [ ] Kokoro, if the system's voices aren't good enough
+- [ ] Short spoken summaries of what finished work did, which needs a language model
+- [ ] Questions with no menu, once there's a safe way to type into them
 
 ## 5. "OK Farol"
 

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Hear what your agents ask and answer out loud, with no key: yes, no, or an option's name. It's off until you turn it on in Settings, Farol, and needs the next version of Farol.
+
 ## [0.2.1] - 2026-11-01
 
 Settings look like one app.
