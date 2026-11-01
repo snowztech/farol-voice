@@ -2,6 +2,8 @@ import Foundation
 
 /// A sentence spoken to Farol itself, turned into something to do by plain rules, so it stays instant, local and predictable.
 public enum VoiceCommand: Equatable, Sendable {
+    /// The app itself, from wherever you are. Sessions are often called farol too, so "go to" is what means a session.
+    case openFarol
     /// `text` is nil to only go there. `focus` is false when you stay where you are.
     case session(id: String, text: String?, send: Bool, focus: Bool)
     case newTask(agent: String?, text: String)
@@ -25,7 +27,10 @@ public enum VoiceCommand: Equatable, Sendable {
         }
     }
 
-    private static let goVerbs = [["take", "me", "to"], ["go", "to"], ["switch", "to"], ["jump", "to"], ["move", "to"], ["show", "me"], ["open"], ["show"]]
+    private static let goVerbs = [["take", "me", "to"], ["bring", "me", "to"], ["switch", "over", "to"], ["go", "over", "to"], ["go", "to"], ["go", "into"], ["switch", "to"], ["jump", "to"], ["move", "to"], ["show", "me"], ["open", "up"], ["bring", "up"], ["open"], ["show"]]
+    private static let openVerbs = [["open", "up"], ["bring", "up"], ["switch", "to"], ["open"], ["launch"], ["start"], ["show", "me"], ["show"]]
+    /// Polite ways into a sentence: "can you please go to auth", "I want to open Farol", "Farol, go to auth".
+    private static let leadIn: Set<String> = ["please", "can", "could", "would", "will", "you", "hey", "ok", "okay", "so", "um", "uh", "just", "i", "want", "wanna", "need", "to", "lets", "let", "us", "farol"]
     /// Natural ways around a name: "the auth session", "session auth".
     private static let lead: Set<String> = ["the", "my", "session", "tab", "terminal", "pane"]
     private static let kinds: Set<String> = ["session", "tab", "terminal", "pane"]
@@ -35,8 +40,15 @@ public enum VoiceCommand: Equatable, Sendable {
     private static let longestSpokenName = 5
 
     public static func parse(_ transcript: String, sessions: [Target]) -> VoiceCommand {
-        let words = transcript.split(whereSeparator: \.isWhitespace).map(String.init)
+        var words = transcript.split(whereSeparator: \.isWhitespace).map(String.init)
+        if words.map(normalized).filter({ !$0.isEmpty }) == ["farol"] { return .openFarol }
+        while let first = words.first, leadIn.contains(normalized(first)), words.count > 1 { words.removeFirst() }
+        if let last = words.last, normalized(last) == "please", words.count > 1 { words.removeLast() }
         let plain = words.map(normalized)
+        for verb in openVerbs where plain.starts(with: verb) {
+            let rest = plain.dropFirst(verb.count).filter { !["the", "app"].contains($0) }
+            if rest == ["farol"] { return .openFarol }
+        }
         if plain.first == "new", let task = plain.firstIndex(of: "task"), task <= 3 {
             return newTask(words, plain, taskAt: task)
         }

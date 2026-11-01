@@ -27,6 +27,8 @@ final class Commander {
     func run(_ transcript: String) async {
         let spoken = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !spoken.isEmpty else { return pill.flash("Didn't catch that") }
+        // Nothing else to resolve here, and it should also work when Farol is closed or has no sessions.
+        if VoiceCommand.parse(spoken, sessions: []) == .openFarol { return await bringFarolForward() }
         guard let path = await farolSocket() else { return }
         switch await request(.sessions, path: path) {
         case .failure(let message):
@@ -48,6 +50,8 @@ final class Commander {
 
     private func carryOut(_ command: VoiceCommand, spoken: String, sessions: [FarolSession], path: String) async {
         switch command {
+        case .openFarol:
+            await bringFarolForward()
         case .session(let id, let text, let send, let focus):
             guard let session = sessions.first(where: { $0.id == id }) else { return }
             await go(to: session, text: text, send: send, focus: focus, path: path)
@@ -68,7 +72,9 @@ final class Commander {
         case .noSession(let name):
             keep(spoken, because: "No session called \"\(name)\"")
         case .notUnderstood:
-            keep(spoken, because: "Try \"go to\", \"tell\" or \"new task\"")
+            // What it heard, so a mishearing can be told from a phrase it doesn't know.
+            Typer.copy(spoken)
+            pill.flash("Heard \"\(Self.shortened(spoken))\". Try \"go to\", \"tell\" or \"new task\".", for: 5)
         }
     }
 
@@ -128,6 +134,20 @@ final class Commander {
         case .failure(let message): keep(text, because: message)
         case .success: pill.flash("Started the task")
         }
+    }
+
+    private static func shortened(_ text: String) -> String {
+        text.count > 48 ? String(text.prefix(48)) + "…" : text
+    }
+
+    private func bringFarolForward() async {
+        let running = Self.appIDs.first { FarolSocket.isRunning(at: Self.socketPath(of: $0)) }
+        let installed = Self.appIDs.first { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }
+        guard let id = running ?? installed, let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else {
+            return pill.flash("Farol isn't installed. Get it at farol.sh.")
+        }
+        pill.flash("Opening Farol", for: 1.5)
+        _ = try? await NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
     }
 
     // MARK: Reaching Farol

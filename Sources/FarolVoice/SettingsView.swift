@@ -88,7 +88,7 @@ struct SettingsView: View {
             TalkKeyPicker(preferences: preferences)
         }
         SettingRow(title: "Hold to tell Farol",
-                   detail: "Say \"go to auth\", \"tell auth to run the tests\", add \"and send it\" to send, or \"new task, add a search box\". Needs a setting in Farol: Settings, Agents, Let Farol Voice control sessions.") {
+                   detail: "Say \"open Farol\", \"go to auth\", \"tell auth to run the tests\", add \"and send it\" to send, or \"new task, add a search box\". Needs a setting in Farol: Settings, Agents, Let Farol Voice control sessions.") {
             Picker("Hold to tell Farol", selection: $preferences.commandKey) {
                 ForEach(TalkKey.allCases) { Text($0.title).tag($0) }
             }

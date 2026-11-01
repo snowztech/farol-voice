@@ -95,3 +95,25 @@ private func said(_ text: String) -> VoiceCommand { VoiceCommand.parse(text, ses
     let sidebar = [VoiceCommand.Target(id: "a", name: "docs"), VoiceCommand.Target(id: "b", name: "api", aliases: ["docs"])]
     #expect(VoiceCommand.parse("go to docs", sessions: sidebar) == .session(id: "a", text: nil, send: false, focus: true))
 }
+
+@Test func opensTheAppByName() {
+    #expect(said("Open Farol.") == .openFarol)
+    #expect(said("open the Farol app") == .openFarol)
+    #expect(said("Can you please open Farol?") == .openFarol)
+    #expect(said("I want to launch Farol") == .openFarol)
+    #expect(said("Farol.") == .openFarol)
+}
+
+@Test func goingToFarolStillMeansASession() {
+    #expect(said("Go to Farol.") == .choices(ids: ["3", "5"]))
+}
+
+@Test func acceptsPoliteWays() {
+    let dashmin = VoiceCommand.session(id: "7", text: nil, send: false, focus: true)
+    #expect(said("Can you go to dashmin?") == dashmin)
+    #expect(said("Please open dashmin") == dashmin)
+    #expect(said("Okay, go over to dashmin, please") == dashmin)
+    #expect(said("I want to go to dashmin") == dashmin)
+    #expect(said("Farol, go to dashmin") == dashmin)
+    #expect(said("Could you tell read docs to summarize") == .session(id: "6", text: "summarize", send: false, focus: false))
+}

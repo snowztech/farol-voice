@@ -4,7 +4,7 @@
 
 ### Added
 
-- A second key to tell Farol what to do from any app: go to a session, message one, or start a task. It opens Farol if it's closed. Needs a Farol with Settings, Agents, Let Farol Voice control sessions.
+- A second key to tell Farol what to do from any app: open Farol, go to a session, message one, or start a task. Needs a Farol with Settings, Agents, Let Farol Voice control sessions.
 
 ## [0.1.1] - 2026-11-01
 
