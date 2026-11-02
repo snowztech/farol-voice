@@ -1,3 +1,4 @@
+import FluidAudio
 import Foundation
 import ParakeetASR
 import VoiceCore
@@ -11,6 +12,7 @@ public actor SpeechEngine {
     private enum Loaded {
         case parakeet(ParakeetASRModel)
         case whisper(WhisperASRModel)
+        case english(AsrManager)
     }
 
     private let folder: URL
@@ -43,6 +45,16 @@ public actor SpeechEngine {
         case .parakeetV3:
             let engine = try await ParakeetASRModel.fromPretrained(cacheDir: directory, offlineMode: !online, progressHandler: progress)
             loaded = (model, .parakeet(engine))
+        case .parakeetV2:
+            let manager = AsrManager(config: .default)
+            // FluidAudio puts the files in a folder of its own next to the path it's given.
+            let models = online
+                ? try await AsrModels.downloadAndLoad(to: directory.appendingPathComponent("models"), version: .v2) { update in
+                    progress(update.fractionCompleted, "Downloading")
+                }
+                : try await AsrModels.loadLocal(from: directory.appendingPathComponent("parakeet-tdt-0.6b-v2"), version: .v2)
+            try await manager.loadModels(models)
+            loaded = (model, .english(manager))
         case .whisperTurbo:
             let engine = try await WhisperASRModel.fromPretrained(cacheDir: directory, offlineMode: !online, progressHandler: progress)
             loaded = (model, .whisper(engine))
@@ -57,6 +69,11 @@ public actor SpeechEngine {
             return try autoreleasepool { try engine.transcribeAudio(samples, sampleRate: 16000) }
         case .whisper(let engine):
             return try await engine.transcribeAudio(samples, sampleRate: 16000, language: language)
+        case .english(let manager):
+            // It refuses under a second of audio, and "yes" is shorter than that.
+            let padded = samples + [Float](repeating: 0, count: max(0, 16000 - samples.count))
+            var state = try TdtDecoderState.make(decoderLayers: await manager.decoderLayerCount)
+            return try await manager.transcribe(padded, decoderState: &state).text
         case nil:
             throw CocoaError(.featureUnsupported)
         }
