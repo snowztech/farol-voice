@@ -181,6 +181,10 @@ struct SettingsView: View {
             .controlSize(.small)
             .fixedSize()
         }
+        SettingRow(title: "Read out what agents ask",
+                   detail: "It says when an agent asks something or finishes, and listens for your answer for a few seconds. Say yes, no or an option's name. It stays quiet during calls.") {
+            Toggle("", isOn: $preferences.speaksAgents).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
+        }
         GroupTitle(title: "What you can say")
         sayRow("Open Farol", "From any app, even if it's closed.")
         sayRow("Go to auth", "Switches to a session, by name or branch.")

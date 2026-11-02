@@ -196,6 +196,22 @@ final class Commander {
         return nil
     }
 
+    /// The socket of a Farol that's already running. Hearing about agents should never open it.
+    nonisolated static func runningSocket() -> String? {
+        appIDs.lazy.map(socketPath(of:)).first { FarolSocket.isRunning(at: $0) }
+    }
+
+    /// Picks an option on a menu, only if it's still the same question. Returns what went wrong, in words to say.
+    func answer(_ session: FarolSession, asking: String, choice: Int) async -> String? {
+        guard let path = Self.runningSocket() else { return "Farol is closed" }
+        return problem(in: await request(.answer(session: session.id, asking: asking, choice: choice), path: path))
+    }
+
+    private func problem(in answer: Answer) -> String? {
+        if case .failure(let message) = answer { return message }
+        return nil
+    }
+
     /// Works out whether commands would work now. Blocks on the socket, so it's never called on the main thread.
     nonisolated static func status() -> FarolStatus {
         guard let id = appIDs.first(where: { FarolSocket.isRunning(at: socketPath(of: $0)) }) else {

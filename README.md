@@ -23,6 +23,7 @@ Hold a second key to tell [Farol](https://github.com/snowztech/farol), the termi
 ## What it does
 
 - **Talks to your agents.** Say "open Farol", "go to auth", "tell auth to run the tests", or "new task, add a search box", from any app. It needs Farol 0.54.1 or later, with **Settings, Agents, Let Farol Voice control sessions** turned on.
+- **Tells you what agents ask.** Turn it on in Settings, Farol, and it says when an agent asks something or finishes, then listens for your answer with no key: yes, no or an option's name. It needs the next version of Farol.
 - **Works everywhere.** It types into any app, and puts your clipboard back afterwards.
 - **Runs on your Mac.** Audio is never sent anywhere or saved. Once a model is installed, it needs no network.
 - **Fast.** About a tenth of a second to transcribe a short phrase on Apple Silicon, using the Parakeet V3 model.
