@@ -10,7 +10,7 @@ final class Commander {
     private static let launchLimit: TimeInterval = 10
 
     /// A dev build talks to Farol Dev first, so testing never touches the sessions in your installed Farol.
-    nonisolated private static var isDevBuild: Bool { Bundle.main.bundleIdentifier?.hasSuffix(".debug") == true }
+    nonisolated static var isDevBuild: Bool { Bundle.main.bundleIdentifier?.hasSuffix(".debug") == true }
     nonisolated private static var appIDs: [String] { isDevBuild ? ["dev.farol.Farol.debug", "dev.farol.Farol"] : ["dev.farol.Farol"] }
 
     private let pill: Pill

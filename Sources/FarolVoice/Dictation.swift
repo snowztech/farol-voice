@@ -1,5 +1,6 @@
 import AppKit
 import AVFoundation
+import Combine
 import VoiceCore
 import VoiceEngine
 
@@ -23,6 +24,9 @@ final class Dictation {
     private let pill: Pill
     private let commander: Commander
     private let agentVoice: AgentVoice
+    private let wake: WakeListener
+    private var preferenceWatch: AnyCancellable?
+    private var wakePausedByKey = false
     private var monitors: [Any] = []
     private var heldKey: TalkKey?
     private var heldIsCommand = false
@@ -38,12 +42,21 @@ final class Dictation {
         self.preferences = preferences
         self.openSettings = openSettings
         pill = Pill(preferences: preferences)
-        let (commander, agentVoice) = MainActor.assumeIsolated { [pill] in
+        let (commander, agentVoice, wake) = MainActor.assumeIsolated { [pill] in
             let commander = Commander(pill: pill)
-            return (commander, AgentVoice(library: library, preferences: preferences, pill: pill, commander: commander))
+            let wake = WakeListener(library: library, pill: pill, commander: commander)
+            let voice = AgentVoice(library: library, preferences: preferences, pill: pill, commander: commander)
+            voice.onBusyChange = { busy in if busy { wake.pause() } else { wake.resume() } }
+            return (commander, voice, wake)
         }
         self.commander = commander
         self.agentVoice = agentVoice
+        self.wake = wake
+        if Commander.isDevBuild {
+            preferenceWatch = preferences.$listensForWake.sink { on in
+                DispatchQueue.main.async { MainActor.assumeIsolated { wake.setEnabled(on) } }
+            }
+        }
     }
 
     func begin() {
@@ -130,12 +143,19 @@ final class Dictation {
             openSettings()
             return
         }
+        MainActor.assumeIsolated {
+            if !wakePausedByKey {
+                wakePausedByKey = true
+                wake.pause()
+            }
+        }
         let pill = pill
         let recording = Recording { level in DispatchQueue.main.async { pill.level = level } }
         do {
             try recording.start()
         } catch {
             pill.flash(error.localizedDescription)
+            resumeAgentVoice()
             return
         }
         self.recording = recording
@@ -233,7 +253,13 @@ final class Dictation {
 
     private func resumeAgentVoice() {
         guard recording == nil, working == 0 else { return }
-        Task { @MainActor [agentVoice] in agentVoice.resume() }
+        Task { @MainActor [agentVoice, wake] in
+            agentVoice.resume()
+            if wakePausedByKey {
+                wakePausedByKey = false
+                wake.resume()
+            }
+        }
     }
 
     private func scheduleUnload() {

@@ -27,7 +27,16 @@ final class AgentVoice {
     private let pill: Pill
     private let commander: Commander
     private let speaker = Speaker()
-    private var state = State.quiet
+    private var state = State.quiet {
+        didSet {
+            let busy = if case .quiet = state { false } else { true }
+            if busy != wasBusy { onBusyChange?(busy) }
+            wasBusy = busy
+        }
+    }
+    private var wasBusy = false
+    /// While it's talking or listening, nothing else should be hearing the mic.
+    var onBusyChange: ((Bool) -> Void)?
     private var queue = NewsQueue()
     private var sessions: [FarolSession] = []
     private var watcher: Task<Void, Never>?

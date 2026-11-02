@@ -80,11 +80,15 @@ In progress. Hear what agents ask, and answer them, even minutes later.
 
 ## 5. "OK Farol"
 
-Needed for voice only: no keyboard, no screen. It comes once the assistant can answer out loud. It's one more toggle in Settings, and works from any app.
+In progress, in dev builds only. Needed for voice only: no keyboard, no screen. It's one more toggle in Settings, and works from any app.
 
-- Train a custom model with openWakeWord, since off-the-shelf keyword spotters don't know the word Farol
-- Check each wake again with the speech recognizer, to reach the false wake bar
-- Test on real voices: at the desk, across the room, on a headset, several accents, and a full day of negatives
+- [x] Train a custom model with openWakeWord, since off-the-shelf keyword spotters don't know the word Farol
+- [x] Check each wake again with the speech recognizer, to reach the false wake bar
+- [x] A dev toggle that listens from any app and hears the command that follows
+- [ ] A full day of real negatives. On one person's 40 desk clips it catches 68% against the 95% bar
+- [ ] Train a new version with faster speech and real voices, since quick sayings are what it misses
+- [ ] Training data with a license that allows release, since openWakeWord's negative features are CC BY-NC-SA
+- [ ] Test on real voices: across the room, on a headset, several accents
 
 ## 6. Conductor
 

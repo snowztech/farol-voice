@@ -124,6 +124,16 @@ struct SettingsView: View {
             Toggle("", isOn: $startAtLogin).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
                 .onChange(of: startAtLogin) { _, on in setStartAtLogin(on) }
         }
+        if Commander.isDevBuild {
+            GroupTitle(title: "Hands-free")
+            SettingRow(title: "Listen for \"OK Farol\"",
+                       detail: WakeListener.isInstalled
+                           ? "Dev builds only, for testing. The mic stays open while this is on, and audio stays on this Mac."
+                           : "Dev builds only. Its models go in \(WakeListener.folder.path).") {
+                Toggle("", isOn: $preferences.listensForWake).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
+                    .disabled(!WakeListener.isInstalled)
+            }
+        }
         GroupTitle(title: "Waveform")
         HStack(spacing: 10) {
             PillPreview(title: "Dictating", size: preferences.waveSize, command: false)

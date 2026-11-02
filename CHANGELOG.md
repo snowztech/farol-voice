@@ -4,12 +4,12 @@
 
 ### Added
 
+- Hear what your agents ask and answer out loud, with no key: yes, no, or an option's name. It's off until you turn it on in Settings, Farol, and needs the next version of Farol.
 - An English-only speech model, now recommended if you speak English. It's the fastest, and an accent can't turn your words into another language.
 
 ### Fixed
 
 - The app now includes the full license texts of everything it ships with.
-- Hear what your agents ask and answer out loud, with no key: yes, no, or an option's name. It's off until you turn it on in Settings, Farol, and needs the next version of Farol.
 
 ## [0.2.1] - 2026-11-01
 

@@ -37,7 +37,7 @@ public final class Recording {
     }
 
     /// 0 to 1, from -50 dB (a quiet room) to -10 dB (close, clear speech).
-    private static func loudness(_ samples: [Float]) -> Double {
+    public static func loudness(_ samples: [Float]) -> Double {
         let power = samples.reduce(Float(0)) { $0 + $1 * $1 } / Float(samples.count)
         let decibels = 10 * log10(Double(max(power, 1e-10)))
         return min(max((decibels + 50) / 40, 0), 1)
