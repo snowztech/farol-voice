@@ -35,7 +35,7 @@ In progress, and done when it has replaced other dictation apps for a week of re
 - [x] A choice of Fn or any right-side modifier key
 - [ ] Record any shortcut, and tap to start and stop
 - [x] Choose your language, and it recommends the model
-- [ ] Try an English-only model, since Parakeet V3 can't be held to one language and sometimes writes words in others
+- [x] An English-only model, since Parakeet V3 can't be held to one language and sometimes writes words in others
 
 ## 2. First release
 

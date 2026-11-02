@@ -61,7 +61,7 @@ final class VoiceCoreTests: XCTestCase {
     }
 
     func testChoosesTheModelFromTheLanguage() {
-        XCTAssertEqual(VoiceModel.best(for: "en"), .parakeetV3)
+        XCTAssertEqual(VoiceModel.best(for: "en"), .parakeetV2)
         XCTAssertEqual(VoiceModel.best(for: "pt"), .parakeetV3)
         XCTAssertEqual(VoiceModel.best(for: "ja"), .whisperTurbo)
         XCTAssertEqual(VoiceModel.best(for: nil), .parakeetV3)
@@ -88,7 +88,7 @@ final class VoiceCoreTests: XCTestCase {
         XCTAssertEqual(SpeechLanguage.codes.count, Set(SpeechLanguage.codes).count)
         for code in ["bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "hr", "hu", "it", "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk"] {
             XCTAssertTrue(SpeechLanguage.codes.contains(code), code)
-            XCTAssertEqual(VoiceModel.best(for: code), .parakeetV3, code)
+            XCTAssertEqual(VoiceModel.best(for: code), code == "en" ? .parakeetV2 : .parakeetV3, code)
         }
     }
 

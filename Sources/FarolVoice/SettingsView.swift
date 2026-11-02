@@ -234,7 +234,7 @@ struct SettingsView: View {
             LanguagePicker(preferences: preferences)
         }
         GroupTitle(title: "Models")
-        // Only two, so both stay in view, with the one for your language first.
+        // Only a few, so they all stay in view, with the one for your language first.
         ForEach([bestModel] + VoiceModel.allCases.filter { $0 != bestModel }, content: modelRow)
         if let problem = library.problem {
             Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)

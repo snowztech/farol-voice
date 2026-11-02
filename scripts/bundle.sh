@@ -27,7 +27,8 @@ mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources" "$app/Contents/Framewor
 cp "$root/.build/release/FarolVoice" "$app/Contents/MacOS/FarolVoice"
 cp "$root/assets/FarolVoice.icns" "$app/Contents/Resources/"
 cp "$root/THIRD_PARTY_NOTICES" "$root/LICENSE" "$app/Contents/Resources/"
-find "$root/.build/release/" -maxdepth 1 -name '*.bundle' -exec cp -R {} "$app/Contents/Resources/" \;
+# Not FluidAudio's LuxTTS data: it's derived from GPL and share-alike sources, and only its text to speech, which this app doesn't use, reads it.
+find "$root/.build/release/" -maxdepth 1 -name '*.bundle' ! -name 'FluidAudio_LuxTtsG2pResources.bundle' -exec cp -R {} "$app/Contents/Resources/" \;
 
 # Sparkle installs updates. Its XPC services are only for sandboxed apps, which this isn't.
 sparkle="$app/Contents/Frameworks/Sparkle.framework"

@@ -4,7 +4,7 @@ import VoiceCore
 import VoiceEngine
 
 let usage = """
-usage: farol-voice transcribe <file.wav>... [--model parakeet-v3|whisper-turbo] [--words "Farol, snowztech"] [--language en]
+usage: farol-voice transcribe <file.wav>... [--model parakeet-v2|parakeet-v3|whisper-turbo] [--words "Farol, snowztech"] [--language en]
        farol-voice understand <socket> <what you'd say>
 
 Files are 16 kHz mono WAV. Use this to compare models on the same recordings.

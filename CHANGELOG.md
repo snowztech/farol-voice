@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- An English-only speech model, now recommended if you speak English. It's the fastest, and an accent can't turn your words into another language.
+
 ### Fixed
 
 - The app now includes the full license texts of everything it ships with.
