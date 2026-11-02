@@ -4,8 +4,9 @@ import VoiceCore
 import VoiceEngine
 
 let usage = """
-usage: farol-voice transcribe <file.wav>... [--model parakeet-v3|whisper-turbo] [--words "Farol, snowztech"] [--language en]
+usage: farol-voice transcribe <file.wav>... [--model parakeet-v2|parakeet-v3|whisper-turbo] [--words "Farol, snowztech"] [--language en]
        farol-voice understand <socket> <what you'd say>
+       farol-voice wake <models folder> <model name> <file.wav>...
 
 Files are 16 kHz mono WAV. Use this to compare models on the same recordings.
 understand shows how a sentence is read against Farol's real sessions, without doing anything.
@@ -24,6 +25,18 @@ func readSamples(_ path: String) throws -> [Float] {
     }
     try audio.read(into: buffer)
     return Array(UnsafeBufferPointer(start: buffer.floatChannelData![0], count: Int(buffer.frameLength)))
+}
+
+/// The highest score a clip gets, through the same steps as live listening, after the silence a stream would have before it.
+func wake(_ arguments: [String]) throws {
+    guard arguments.count >= 3 else { fail(usage) }
+    let folder = URL(fileURLWithPath: arguments[0])
+    for path in arguments.dropFirst(2) {
+        let detector = try WakeDetector(folder: folder, modelName: arguments[1])
+        let samples = [Float](repeating: 0, count: 32000) + (try readSamples(path)).map { $0 } + [Float](repeating: 0, count: 8000)
+        let scores = try detector.feed(samples)
+        print(String(format: "%.3f", scores.max() ?? 0), URL(fileURLWithPath: path).lastPathComponent)
+    }
 }
 
 func transcribe(_ arguments: [String]) async throws {
@@ -74,6 +87,7 @@ let arguments = Array(CommandLine.arguments.dropFirst())
 do {
     switch arguments.first {
     case "transcribe": try await transcribe(Array(arguments.dropFirst()))
+    case "wake": try wake(Array(arguments.dropFirst()))
     case "understand": try understand(Array(arguments.dropFirst()))
     default: fail(usage)
     }

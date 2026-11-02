@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreAudio
 
 public enum MicrophoneError: LocalizedError {
     case unavailable
@@ -9,6 +10,19 @@ public enum MicrophoneError: LocalizedError {
 /// The default input as 16 kHz mono. Make a new one per recording, so it follows the input the Mac is using now.
 public final class Microphone {
     public init() {}
+
+    /// Something has the default input open, which usually means a call. Only ask while this app isn't recording.
+    public static var isInUse: Bool {
+        var device = AudioDeviceID(0)
+        var size = UInt32(MemoryLayout<AudioDeviceID>.size)
+        var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultInputDevice, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+        guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &device) == noErr else { return false }
+        var running = UInt32(0)
+        size = UInt32(MemoryLayout<UInt32>.size)
+        address.mSelector = kAudioDevicePropertyDeviceIsRunningSomewhere
+        guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, &running) == noErr else { return false }
+        return running != 0
+    }
 
     private let engine = AVAudioEngine()
 

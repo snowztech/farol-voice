@@ -12,7 +12,7 @@ enum Snapshot {
         for _ in 0..<30 { _ = signal.step() }
         NSApp.applicationIconImage = NSImage(contentsOfFile: "assets/FarolVoice.icns")
         // Near each tab's natural height, since a fixed test size leaves a gap the real window doesn't have.
-        let heights: [SettingsView.Section: CGFloat] = [.farol: 500, .models: 342]
+        let heights: [SettingsView.Section: CGFloat] = [.farol: 500, .models: 450]
         for section in SettingsView.Section.allCases {
             save(SettingsView(library: library, preferences: preferences, section: section, farolStatus: .ready), "settings-\(section.rawValue)", folder, height: heights[section] ?? 560)
         }

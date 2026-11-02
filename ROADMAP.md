@@ -35,7 +35,7 @@ In progress, and done when it has replaced other dictation apps for a week of re
 - [x] A choice of Fn or any right-side modifier key
 - [ ] Record any shortcut, and tap to start and stop
 - [x] Choose your language, and it recommends the model
-- [ ] Try an English-only model, since Parakeet V3 can't be held to one language and sometimes writes words in others
+- [x] An English-only model, since Parakeet V3 can't be held to one language and sometimes writes words in others
 
 ## 2. First release
 
@@ -66,20 +66,29 @@ In progress. Done when you can switch sessions and message agents from any app, 
 
 ## 4. Spoken replies
 
-Hear what agents ask, and answer them, even minutes later.
+In progress. Hear what agents ask, and answer them, even minutes later.
 
-- Live events from Farol's socket when a session waits or finishes
-- Text to speech on your Mac, starting with Kokoro
-- One voice at a time, with questions first, and never talking over you
-- After it speaks, answer without pressing anything
+- [x] Live updates from Farol's socket when a session waits or finishes
+- [x] Text to speech on your Mac, with the system's voices for now
+- [x] One voice at a time, with questions first, and never talking over you or a call
+- [x] After it speaks, answer without pressing anything
+- [x] Only answer menus Farol can read, and only with a clear yes, no or option
+- [ ] Use it on real work, and tune when it decides you've finished talking
+- [ ] Kokoro, if the system's voices aren't good enough
+- [ ] Short spoken summaries of what finished work did, which needs a language model
+- [ ] Questions with no menu, once there's a safe way to type into them
 
 ## 5. "OK Farol"
 
-Needed for voice only: no keyboard, no screen. It comes once the assistant can answer out loud. It's one more toggle in Settings, and works from any app.
+In progress, in dev builds only. Needed for voice only: no keyboard, no screen. It's one more toggle in Settings, and works from any app.
 
-- Train a custom model with openWakeWord, since off-the-shelf keyword spotters don't know the word Farol
-- Check each wake again with the speech recognizer, to reach the false wake bar
-- Test on real voices: at the desk, across the room, on a headset, several accents, and a full day of negatives
+- [x] Train a custom model with openWakeWord, since off-the-shelf keyword spotters don't know the word Farol
+- [x] Check each wake again with the speech recognizer, to reach the false wake bar
+- [x] A dev toggle that listens from any app and hears the command that follows
+- [ ] A full day of real negatives. On one person's 40 desk clips it catches 68% against the 95% bar
+- [ ] Train a new version with faster speech and real voices, since quick sayings are what it misses
+- [ ] Training data with a license that allows release, since openWakeWord's negative features are CC BY-NC-SA
+- [ ] Test on real voices: across the room, on a headset, several accents
 
 ## 6. Conductor
 

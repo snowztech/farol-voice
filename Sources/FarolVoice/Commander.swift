@@ -10,7 +10,7 @@ final class Commander {
     private static let launchLimit: TimeInterval = 10
 
     /// A dev build talks to Farol Dev first, so testing never touches the sessions in your installed Farol.
-    nonisolated private static var isDevBuild: Bool { Bundle.main.bundleIdentifier?.hasSuffix(".debug") == true }
+    nonisolated static var isDevBuild: Bool { Bundle.main.bundleIdentifier?.hasSuffix(".debug") == true }
     nonisolated private static var appIDs: [String] { isDevBuild ? ["dev.farol.Farol.debug", "dev.farol.Farol"] : ["dev.farol.Farol"] }
 
     private let pill: Pill
@@ -193,6 +193,22 @@ final class Commander {
             try? await Task.sleep(for: .milliseconds(200))
         }
         pill.flash("Farol didn't open in time")
+        return nil
+    }
+
+    /// The socket of a Farol that's already running. Hearing about agents should never open it.
+    nonisolated static func runningSocket() -> String? {
+        appIDs.lazy.map(socketPath(of:)).first { FarolSocket.isRunning(at: $0) }
+    }
+
+    /// Picks an option on a menu, only if it's still the same question. Returns what went wrong, in words to say.
+    func answer(_ session: FarolSession, asking: String, choice: Int) async -> String? {
+        guard let path = Self.runningSocket() else { return "Farol is closed" }
+        return problem(in: await request(.answer(session: session.id, asking: asking, choice: choice), path: path))
+    }
+
+    private func problem(in answer: Answer) -> String? {
+        if case .failure(let message) = answer { return message }
         return nil
     }
 

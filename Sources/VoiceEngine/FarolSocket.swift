@@ -9,7 +9,7 @@ public enum FarolSocket {
         case tooOld
     }
 
-    private static let timeout = timeval(tv_sec: 5, tv_usec: 0)
+    private static let timeout = 5
 
     public static func isRunning(at path: String) -> Bool {
         let descriptor = connected(to: path)
@@ -17,8 +17,9 @@ public enum FarolSocket {
         return descriptor >= 0
     }
 
-    public static func send(_ action: FarolAction, to path: String) throws -> FarolReply {
-        let descriptor = connected(to: path)
+    /// `waitingUpTo` is for requests Farol holds on purpose, like a watch.
+    public static func send(_ action: FarolAction, to path: String, waitingUpTo seconds: Int? = nil) throws -> FarolReply {
+        let descriptor = connected(to: path, waitingUpTo: seconds ?? timeout)
         guard descriptor >= 0 else { throw Failure.notRunning }
         defer { close(descriptor) }
         var line = try JSONEncoder().encode(FarolRequest(action: action))
@@ -36,13 +37,13 @@ public enum FarolSocket {
         return reply
     }
 
-    private static func connected(to path: String) -> Int32 {
+    private static func connected(to path: String, waitingUpTo seconds: Int = timeout) -> Int32 {
         let descriptor = socket(AF_UNIX, SOCK_STREAM, 0)
         guard descriptor >= 0 else { return -1 }
         var on: Int32 = 1
         // Farol quitting mid-request should fail here, and not take this app down with a signal.
         setsockopt(descriptor, SOL_SOCKET, SO_NOSIGPIPE, &on, socklen_t(MemoryLayout<Int32>.size))
-        var limit = timeout
+        var limit = timeval(tv_sec: seconds, tv_usec: 0)
         setsockopt(descriptor, SOL_SOCKET, SO_RCVTIMEO, &limit, socklen_t(MemoryLayout<timeval>.size))
         var address = sockaddr_un()
         address.sun_family = sa_family_t(AF_UNIX)

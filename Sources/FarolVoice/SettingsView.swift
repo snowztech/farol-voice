@@ -124,6 +124,16 @@ struct SettingsView: View {
             Toggle("", isOn: $startAtLogin).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
                 .onChange(of: startAtLogin) { _, on in setStartAtLogin(on) }
         }
+        if Commander.isDevBuild {
+            GroupTitle(title: "Hands-free")
+            SettingRow(title: "Listen for \"OK Farol\"",
+                       detail: WakeListener.isInstalled
+                           ? "Dev builds only, for testing. The mic stays open while this is on, and audio stays on this Mac."
+                           : "Dev builds only. Its models go in \(WakeListener.folder.path).") {
+                Toggle("", isOn: $preferences.listensForWake).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
+                    .disabled(!WakeListener.isInstalled)
+            }
+        }
         GroupTitle(title: "Waveform")
         HStack(spacing: 10) {
             PillPreview(title: "Dictating", size: preferences.waveSize, command: false)
@@ -181,6 +191,10 @@ struct SettingsView: View {
             .controlSize(.small)
             .fixedSize()
         }
+        SettingRow(title: "Read out what agents ask",
+                   detail: "It says when an agent asks something or finishes, and listens for your answer for a few seconds. Say yes, no or an option's name. It stays quiet during calls.") {
+            Toggle("", isOn: $preferences.speaksAgents).labelsHidden().toggleStyle(.switch).controlSize(.small).tint(Theme.control)
+        }
         GroupTitle(title: "What you can say")
         sayRow("Open Farol", "From any app, even if it's closed.")
         sayRow("Go to auth", "Switches to a session, by name or branch.")
@@ -234,7 +248,7 @@ struct SettingsView: View {
             LanguagePicker(preferences: preferences)
         }
         GroupTitle(title: "Models")
-        // Only two, so both stay in view, with the one for your language first.
+        // Only a few, so they all stay in view, with the one for your language first.
         ForEach([bestModel] + VoiceModel.allCases.filter { $0 != bestModel }, content: modelRow)
         if let problem = library.problem {
             Text(problem).font(.system(size: 11.5)).foregroundStyle(Theme.warning).padding(.top, 6)

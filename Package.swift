@@ -7,6 +7,10 @@ let package = Package(
     platforms: [.macOS(.v15)],
     dependencies: [
         .package(url: "https://github.com/soniqo/speech-swift", exact: "0.0.29"),
+        // For Parakeet V2, the English-only model, which speech-swift doesn't offer.
+        .package(url: "https://github.com/FluidInference/FluidAudio", exact: "0.18.2"),
+        // Runs the wake word's models.
+        .package(url: "https://github.com/microsoft/onnxruntime-swift-package-manager", exact: "1.24.2"),
         // Exact, since scripts/appcast.sh downloads the signing tools of this same version.
         .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.0"),
     ],
@@ -17,6 +21,8 @@ let package = Package(
             "VoiceCore",
             .product(name: "ParakeetASR", package: "speech-swift"),
             .product(name: "WhisperASR", package: "speech-swift"),
+            .product(name: "FluidAudio", package: "FluidAudio"),
+            .product(name: "onnxruntime", package: "onnxruntime-swift-package-manager"),
         ]),
         // The menu bar app.
         .executableTarget(name: "FarolVoice", dependencies: ["VoiceCore", "VoiceEngine", .product(name: "Sparkle", package: "Sparkle")], linkerSettings: [.linkedFramework("Carbon")]),

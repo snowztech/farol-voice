@@ -1,5 +1,6 @@
 /// A speech model you can install and run on this Mac.
 public enum VoiceModel: String, CaseIterable, Identifiable, Sendable {
+    case parakeetV2 = "parakeet-v2"
     case parakeetV3 = "parakeet-v3"
     case whisperTurbo = "whisper-turbo"
 
@@ -14,6 +15,7 @@ public enum VoiceModel: String, CaseIterable, Identifiable, Sendable {
     /// What it's good for, which is what people choose by. The real name stays beside it for anyone who knows it.
     public var friendlyName: String {
         switch self {
+        case .parakeetV2: "English"
         case .parakeetV3: "Fast"
         case .whisperTurbo: "Most languages"
         }
@@ -21,6 +23,7 @@ public enum VoiceModel: String, CaseIterable, Identifiable, Sendable {
 
     public var title: String {
         switch self {
+        case .parakeetV2: "Parakeet V2"
         case .parakeetV3: "Parakeet V3"
         case .whisperTurbo: "Whisper Large V3 Turbo"
         }
@@ -28,6 +31,7 @@ public enum VoiceModel: String, CaseIterable, Identifiable, Sendable {
 
     public var strengths: String {
         switch self {
+        case .parakeetV2: "The fastest. Only ever writes English, whatever your accent."
         case .parakeetV3: "English and 24 more languages, most of them European."
         case .whisperTurbo: "Slower, with about 100 languages."
         }
@@ -35,6 +39,7 @@ public enum VoiceModel: String, CaseIterable, Identifiable, Sendable {
 
     public var downloadSize: String {
         switch self {
+        case .parakeetV2: "About 450 MB."
         case .parakeetV3: "About 600 MB."
         case .whisperTurbo: "A larger download."
         }
@@ -44,9 +49,11 @@ public enum VoiceModel: String, CaseIterable, Identifiable, Sendable {
         best(for: languages.first.map(SpeechLanguage.code(of:)))
     }
 
+    /// English gets the model that can't drift into another language, since V3 guesses per phrase and an accent can tip it.
     /// Fast when it understands the language, and Whisper for the rest. No language means detecting it, which starts from fast.
     public static func best(for language: String?) -> VoiceModel {
         guard let language else { return .parakeetV3 }
+        if language == "en" { return .parakeetV2 }
         return parakeetLanguages.contains(language) ? .parakeetV3 : .whisperTurbo
     }
 
